@@ -1,0 +1,25 @@
+Package: Analitica
+Title: Exploratory Data Analysis and Group Comparison Tools
+Version: 1.8.1
+Authors@R: person("Carlos", "Jiménez-Gallardo", email = "carlos.jimenez@ufrontera.cl", role = c("aut", "cre"))
+Description: Provides tools for descriptive statistics, graphical exploration,
+    outlier detection, homoscedasticity tests, and multiple comparison procedures.
+    Includes manual implementations of Levene's test, Bartlett's test, Fligner-Killeen,
+    and post hoc comparisons such as Tukey, Scheffe, Games-Howell, Brunner-Munzel, and others.
+    Useful for teaching, applied analysis, and reproducible research.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Depends: R (>= 4.4)
+Imports: ggplot2, dplyr, tidyr, ggridges, patchwork, moments, magrittr,
+        rlang, tidyselect, multcompView,
+Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+NeedsCompilation: no
+Packaged: 2025-06-12 16:21:08 UTC; carlo
+Author: Carlos Jiménez-Gallardo [aut, cre]
+Maintainer: Carlos Jiménez-Gallardo <carlos.jimenez@ufrontera.cl>
+Repository: CRAN
+Date/Publication: 2025-06-14 09:00:10 UTC

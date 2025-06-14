@@ -1,0 +1,97 @@
+---
+title: "Introduction to Analitica"
+author: "Carlos Jiménez-Gallardo"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{Introduction to Analitica}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+library(Analitica)
+data(d_e, package = "Analitica")
+```
+
+# Overview
+
+The `Analitica` package provides essential tools for:
+
+-   Descriptive statistical summaries
+-   Exploratory visualizations
+-   Homoscedasticity tests
+-   Outlier detection
+-   Parametric and non-parametric group comparisons
+
+It is suitable for researchers, educators, and analysts seeking quick and interpretable workflows.
+
+# 1. Descriptive Analysis
+
+Use `descripYG()` to explore a numeric variable, optionally grouped by a categorical variable:
+
+```{r desc-example}
+data(d_e, package = "Analitica")
+descripYG(d_e, vd = Sueldo_actual)
+descripYG(d_e, vd = Sueldo_actual, vi = labor)
+```
+
+# 2. Homogeneity of Variance Tests
+
+You can assess variance assumptions using manual implementations:
+
+```{r homo-tests}
+Levene.Test(Sueldo_actual ~ labor, data = d_e)
+BartlettTest(Sueldo_actual ~ labor, data = d_e)
+FKTest(Sueldo_actual ~ labor, data = d_e)
+```
+
+# 3. Outlier Detection
+
+Detect univariate outliers with Grubbs' test:
+
+```{r outliers}
+res <- grubbs_outliers(d_e, Sueldo_actual)
+head(res[res$outL == TRUE, ])
+```
+
+# 4. Multiple Comparisons (Post Hoc Tests)
+
+Fit an ANOVA model and apply post hoc tests:
+
+```{r comparisons}
+mod <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
+resultado <- GHTest(mod)
+summary(resultado)
+plot(resultado)
+```
+
+Other methods include `TukeyTest()`, `ScheffeTest()`, `DuncanTest()`, `SNKTest()`, `T2Test()`, and `T3Test()`.
+
+# 5. Non-Parametric Tests
+
+When assumptions are violated, try:
+
+```{r np-tests}
+g1 <- d_e$Sueldo_actual[d_e$labor == 1]
+g2 <- d_e$Sueldo_actual[d_e$labor == 2]
+MWTest(g1, g2)
+BMTest(g1, g2)
+BMpTest(g1, g2)
+```
+
+# Conclusion
+
+`Analitica` integrates descriptive analysis with robust comparison methods for applied data exploration.
+
+For detailed documentation, see `?Analitica` or function-specific help pages like `?GHTest` or `?descripYG`.
