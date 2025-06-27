@@ -1,6 +1,6 @@
-35a93299ea5a1a68c59b8bf531d5a691 *DESCRIPTION
+1b2cc16ce2f69b468fa0a5657670f6b8 *DESCRIPTION
 bf5724d7b9a178856cb3cf5b9e162694 *LICENSE
-80a5ede7960c1d8bd7e985727f48a941 *NAMESPACE
+5ca10b314de81a967b6fb297b3d7b4e4 *NAMESPACE
 2e536cda1efe9b3869fead9ec61f4d93 *R/Analitica-package.R
 474e4f50f767d3ef7b3e08296f7a3d55 *R/BMTest_permutations.R
 8edaccd7c0339871a9d9bc79d12b4742 *R/Bartlett.R
@@ -16,6 +16,8 @@ e6f03dbccb8881461e9889566d2030bd *R/DSCFTest.R
 71cae18a9741f27148f532310d2fd5f6 *R/GabrielTest.R
 d93f1a620a5201e07e4702430d65176a *R/GamesHowellTest.R
 bf904b7256cf3ba390d230d190dc7aec *R/HolmTest.R
+d525c84ef4498bebad4eae95ad2f764c *R/JarqueBera_GTest.R
+6d96541d78881dd48089bbd01ffa9245 *R/JonckheereTest.R
 9434d7312154d758b0bfbdd7bc02ac93 *R/LSDTest.R
 883320c56161761bfc599610838c4470 *R/LeveneTest.R
 02cec1ed85bbac84934e15b7192aaa17 *R/MannWhitneyTest.R
@@ -41,7 +43,7 @@ dc9069d2d8369901265016b853353f3b *build/vignette.rds
 34a71149673b7739e8451beae596b256 *data/d_e.rda
 eb5fef2aa721319a481b0caa62a2235a *inst/doc/Analitica-intro.R
 72e3d40911209e9b66a79d5be091bfba *inst/doc/Analitica-intro.Rmd
-f1c738bc7c82bdb41d60c721eecc0a26 *inst/doc/Analitica-intro.html
+40097185b0a694e93a343f5a08e87047 *inst/doc/Analitica-intro.html
 50898803e20cf28d89b8bf35600e3f4d *man/Analitica.Rd
 bca8394cfb520550edd2264406243e0e *man/BMTest.Rd
 5943880ca91eac98b1f5551b47723deb *man/BMpTest.Rd
@@ -57,6 +59,8 @@ c816319702c1ee644f3a51c16f3db694 *man/FKTest.Rd
 b76e514ee7aacc30b712a950d4085191 *man/GHTest.Rd
 110bfdf4218810a46af3466d4a62ac41 *man/GabrielTest.Rd
 06b340bdd6c42ea696bfce74913b3795 *man/HolmTest.Rd
+b2fd8c9101d9483927a26dd207558032 *man/JBGTest.Rd
+b4d178ee9124f8e2eab5ab936223ce1e *man/JT_Test.Rd
 d99446a5e8d5d6a89082097ee4b8daae *man/LSDTest.Rd
 0908a02fdfb7ab0af42f44ae11174587 *man/Levene.Test.Rd
 f81afda809a2160053d1d3e1234c318e *man/MWTest.Rd
