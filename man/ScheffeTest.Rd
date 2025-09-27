@@ -2,30 +2,35 @@
 % Please edit documentation in R/ScheffeTest.R
 \name{ScheffeTest}
 \alias{ScheffeTest}
-\title{Scheffé Test for Multiple Comparisons}
+\title{Scheffe Test for Multiple Comparisons v2.0}
 \usage{
-ScheffeTest(modelo, alpha = 0.05)
+ScheffeTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm} representing an ANOVA model.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
+
+\item{alpha}{Significance level (default 0.05).}
 }
 \value{
-An object of class \code{"scheffe"} and \code{"comparaciones"}, containing:
+Objeto de clase \code{"scheffe"} and \code{"comparaciones"} with:
 \itemize{
-  \item \code{Resultados}: A data frame of pairwise comparisons with difference, critical value, p-value, and significance code.
-  \item \code{Promedios}: A named numeric vector of group means.
-  \item \code{Orden_Medias}: A character vector with group names ordered from highest to lowest mean.
-  \item \code{Metodo}: A character string indicating the test name ("Scheffe").
+  \item \code{Resultados}: data.frame with \code{Comparacion}, \code{Diferencia},
+        \code{SE2} (= MSerror*(1/n_i+1/n_j)), \code{F_obs}, \code{Valor_Critico}, \code{p_value}, \code{Significancia}.
+  \item \code{Promedios}, \code{Orden_Medias}, \code{Metodo}="Scheffe", \code{Termino}.
+  \item \code{MSerror}, \code{df_error}, \code{N} (utiles para \code{plot.comparaciones()}).
 }
 }
 \description{
-Performs Scheffé's post hoc test after fitting an ANOVA model. This test compares all possible
+Performs Scheffe's post hoc test after fitting an ANOVA model. This test compares all possible
 pairs of group means, using a critical value based on the F-distribution.
 }
 \details{
-The Scheffé test is a conservative method, making it harder to detect significant differences,
+The Scheffe test is a conservative method, making it harder to detect significant differences,
 but reducing the likelihood of Type I errors (false positives). It is especially appropriate
 when the comparisons were not pre-planned and the number of contrasts is large.
 
@@ -45,7 +50,19 @@ mod <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
 resultado <- ScheffeTest(mod)
 summary(resultado)
 plot(resultado)
+
+# RCBD
+mod <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res <- ScheffeTest(mod, comparar = "as.factor(labor)")
+summary(res); plot(res)                      # plot usara p_value
+
+# Factorial
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+resAB <- ScheffeTest(mod2, comparar = c("as.factor(labor)","Sexo"))
+summary(resAB, n = Inf); plot(resAB, horizontal = TRUE)
+
+
 }
 \references{
-Scheffé, H. (1953). "A method for judging all contrasts in the analysis of variance." \emph{Biometrika}, 40(1/2), 87–104. <https://doi.org/10.1093/biomet/40.1-2.87>
+Scheffe, H. (1953). "A method for judging all contrasts in the analysis of variance." \emph{Biometrika}, 40(1/2), 87–104. <https://doi.org/10.1093/biomet/40.1-2.87>
 }

@@ -2,22 +2,30 @@
 % Please edit documentation in R/GabrielTest.R
 \name{GabrielTest}
 \alias{GabrielTest}
-\title{Gabriel’s Post Hoc Test for Multiple Comparisons}
+\title{Gabriel’s Post Hoc Test for Multiple Comparisons v 2.0}
 \usage{
-GabrielTest(modelo, alpha = 0.05)
+GabrielTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm}.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
+
+\item{alpha}{Significance level (default 0.05).}
 }
 \value{
-An object of class \code{"gabriel"} and \code{"comparaciones"}, containing:
+An object of class \code{"gabriel"} and \code{"comparaciones"} containing:
 \itemize{
-  \item \code{Resultados}: Data frame with comparisons, mean differences, adjusted critical value, p-value, and significance level.
-  \item \code{Promedios}: Named numeric vector of group means.
-  \item \code{Orden_Medias}: Vector of group names ordered from highest to lowest mean.
-  \item \code{Metodo}: Name of the method used ("Gabriel").
+  \item \code{Resultados}: a data.frame with columns \code{Comparacion}, \code{Diferencia}, \code{SE}, \code{t_value},
+        \code{p_value} (unadjusted), \code{p_ajustada} (gabriel), \code{Valor_Critico} (critical difference), and \code{Significancia}.
+  \item \code{Promedios}: a named vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: group names ordered from highest to lowest mean.
+  \item \code{Metodo}: "Gabriel t-test".
+  \item \code{Termino}: the term being compared (e.g., "A", "B", or "A:B").
+  \item \code{MSerror}, \code{df_error}, \code{N}: useful for plots with error bars.
 }
 }
 \description{
@@ -33,12 +41,23 @@ Disadvantages:
 - Less common in standard statistical software.
 }
 \examples{
+
+# DCA
 data(d_e, package = "Analitica")
-mod <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
-resultado <- GabrielTest(mod)
+mod1 <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
+resultado <- GabrielTest(mod1)
 summary(resultado)
 plot(resultado)
 
+# RCBD
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res <- GabrielTest(mod2, comparar = "as.factor(labor)")
+summary(res); plot(res)
+
+# Factorial
+mod3 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+resAB <- GabrielTest(mod3, comparar = c("as.factor(labor)","Sexo"))  # celdas A:B
+summary(resAB, n = Inf); plot(resAB, horizontal = TRUE)
 
 }
 \references{

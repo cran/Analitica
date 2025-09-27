@@ -2,23 +2,30 @@
 % Please edit documentation in R/SNKTest.R
 \name{SNKTest}
 \alias{SNKTest}
-\title{Student-Newman-Keuls (SNK) Test for Multiple Comparisons}
+\title{Student-Newman-Keuls (SNK) Test for Multiple Comparisons v2.0}
 \usage{
-SNKTest(modelo, alpha = 0.05)
+SNKTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm} representing an ANOVA model.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
+
+\item{alpha}{Significance level (default 0.05).}
 }
 \value{
-An object of class \code{"snk"} and \code{"comparaciones"}, containing:
+An object of class \code{"SNK"} and \code{"comparaciones"} containing:
 \itemize{
-  \item \code{Resultados}: A data frame with pairwise comparisons, including mean differences,
-  critical values, p-values, and significance codes.
-  \item \code{Promedios}: A named numeric vector of group means.
-  \item \code{Orden_Medias}: A character vector with group names ordered from highest to lowest mean.
-  \item \code{Metodo}: A character string indicating the test used ("SNK").
+  \item \code{Resultados}: a data.frame with columns \code{Comparacion}, \code{Diferencia}, \code{SE}, \code{t_value},
+        \code{p_value} (unadjusted), \code{p_ajustada} (SNK), \code{Valor_Critico} (critical difference), and \code{Significancia}.
+  \item \code{Promedios}: a named vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: group names ordered from highest to lowest mean.
+  \item \code{Metodo}: "SNK t-test".
+  \item \code{Termino}: the term being compared (e.g., "A", "B", or "A:B").
+  \item \code{MSerror}, \code{df_error}, \code{N}: useful for plots with error bars.
 }
 }
 \description{
@@ -47,8 +54,17 @@ resultado <- SNKTest(mod)
 summary(resultado)
 plot(resultado)
 
+# RCBD
+mod <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res <- SNKTest(mod, comparar = "as.factor(labor)")
+summary(res); plot(res)                      # plot usara p_value
+
+# Factorial
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+resAB <- SNKTest(mod2, comparar = c("as.factor(labor)","Sexo"))
+summary(resAB, n = Inf); plot(resAB, horizontal = TRUE)
+
 }
 \references{
-Student, Newman, and Keuls (1952). "Student-Newman-Keuls Procedure".
-See also: <https://doi.org/10.1002/bimj.200310019>
+Student, Newman, and Keuls (1952). "Student-Newman-Keuls Procedure". See also: <https://doi.org/10.1002/bimj.200310019>
 }

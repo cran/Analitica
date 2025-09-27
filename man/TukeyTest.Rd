@@ -2,22 +2,30 @@
 % Please edit documentation in R/TukeyTest.R
 \name{TukeyTest}
 \alias{TukeyTest}
-\title{Tukey HSD Test for Multiple Comparisons}
+\title{Tukey HSD Test for Multiple Comparisons v2.0}
 \usage{
-TukeyTest(modelo, alpha = 0.05)
+TukeyTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm} representing an ANOVA model.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
+
+\item{alpha}{Significance level (default 0.05).}
 }
 \value{
-An object of class \code{"tukey"} and \code{"comparaciones"}, containing:
+An object of class \code{"tukey"} and \code{"comparaciones"} containing:
 \itemize{
-  \item \code{Resultados}: A data frame of pairwise comparisons with mean differences, critical value, p-value, and significance level.
-  \item \code{Promedios}: A named numeric vector of group means.
-  \item \code{Orden_Medias}: A character vector with group names ordered from highest to lowest mean.
-  \item \code{Metodo}: A character string indicating the method used ("Tukey").
+  \item \code{Resultados}: a data.frame with columns \code{Comparacion}, \code{Diferencia}, \code{SE}, \code{t_value},
+        \code{p_value} (unadjusted), \code{p_ajustada} (Tukey), \code{Valor_Critico} (critical difference), and \code{Significancia}.
+  \item \code{Promedios}: a named vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: group names ordered from highest to lowest mean.
+  \item \code{Metodo}: "Tukey test".
+  \item \code{Termino}: the term being compared (e.g., "A", "B", or "A:B").
+  \item \code{MSerror}, \code{df_error}, \code{N}: useful for plots with error bars.
 }
 }
 \description{
@@ -39,11 +47,35 @@ Disadvantages:
 - Less powerful with heteroscedasticity.
 }
 \examples{
+
+#Caso DCA
 data(d_e, package = "Analitica")
-mod <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
-resultado <- TukeyTest(mod)
+mod1 <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
+summary(mod1)
+resultado <- TukeyTest(mod1)
 summary(resultado)
 plot(resultado)
+
+#Caso DBA
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+summary(mod2)
+# Comparar niveles de 'tratamiento' (ajustando el error por el modelo con bloque)
+res <- TukeyTest(mod2, comparar = "as.factor(labor)")
+summary(res)
+plot(res)
+
+#Caso DFA Two Ways
+mod3 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+summary(mod3)
+# promedios de as.factor(labor) (promediando sobre B)
+resA <- TukeyTest(mod3, comparar = "as.factor(labor)")
+summary(resA)
+plot(resA)
+
+# promedios de la interaccion entre factor A y factor B
+resB <- TukeyTest(mod3, comparar = c("as.factor(labor)","Sexo"))
+summary(resB)
+plot(resB)
 
 }
 \references{

@@ -2,28 +2,42 @@
 % Please edit documentation in R/plot_comparations.R
 \name{plot.comparaciones}
 \alias{plot.comparaciones}
-\title{Generic plot for multiple comparison tests (with multcompView letters)}
+\title{Generic plot for multiple-comparison tests (with multcompView letters)}
 \usage{
-\method{plot}{comparaciones}(x, ...)
+\method{plot}{comparaciones}(
+  x,
+  alpha = 0.05,
+  p_column = c("auto", "p_ajustada", "p_value", "p"),
+  horizontal = FALSE,
+  fill = "steelblue",
+  label_size = 5,
+  angle_x = 45,
+  show_se = FALSE,
+  ...
+)
 }
 \arguments{
-\item{x}{An object of class \code{comparaciones}.}
+\item{x}{An object of class \code{comparaciones} (includes "bonferroni" or "tukey").}
 
-\item{...}{Additional arguments (currently not used).}
+\item{alpha}{Significance threshold for the letters (default 0.05).}
+
+\item{p_column}{Which p-value column to use: "auto" (detect), "p_ajustada", "p_value", or "p".}
+
+\item{horizontal}{If TRUE, draw horizontal bars.}
+
+\item{fill}{Bar fill color.}
+
+\item{label_size}{Letter size.}
+
+\item{angle_x}{Angle of x-axis labels (if \code{horizontal = FALSE}).}
+
+\item{show_se}{If TRUE and \code{x$MSerror} and \code{x$N} exist, draws standard error (SE) bars.}
+
+\item{...}{Not used.}
 }
 \value{
-No return value. Called for side effects: displays a bar plot with significance letters.
+A \code{ggplot} object.
 }
 \description{
-This function generates a bar plot displaying group means along with significance letters
-based on multiple comparisons. It uses \code{multcompView} to assign letters indicating
-statistically different groups.
-}
-\examples{
-# Assuming you have an object of class 'comparaciones' named res
-# plot(res)
-
-}
-\seealso{
-\code{\link[multcompView]{multcompLetters}}, \code{\link[ggplot2]{ggplot}}
+Generic plot for multiple-comparison tests (with multcompView letters)
 }

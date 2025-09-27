@@ -2,22 +2,30 @@
 % Please edit documentation in R/HolmTest.R
 \name{HolmTest}
 \alias{HolmTest}
-\title{Holm-Adjusted Pairwise Comparisons}
+\title{Holm-Adjusted Pairwise Comparisons v2.0}
 \usage{
-HolmTest(modelo, alpha = 0.05)
+HolmTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm}.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
+
+\item{alpha}{Significance level (default 0.05).}
 }
 \value{
-An object of class \code{"holm"} and \code{"comparaciones"}, containing:
+An object of class \code{"holm"} and \code{"comparaciones"} containing:
 \itemize{
-  \item \code{Resultados}: Data frame of comparisons, mean differences, t-values, unadjusted and adjusted p-values, and significance codes.
-  \item \code{Promedios}: Named numeric vector of group means.
-  \item \code{Orden_Medias}: Character vector with group names ordered from highest to lowest mean.
-  \item \code{Metodo}: Name of the method used ("Holm-adjusted t-test").
+  \item \code{Resultados}: a data.frame with columns \code{Comparacion}, \code{Diferencia}, \code{SE}, \code{t_value},
+        \code{p_value} (unadjusted), \code{p_ajustada} (Holm), \code{Valor_Critico} (critical difference), and \code{Significancia}.
+  \item \code{Promedios}: a named vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: group names ordered from highest to lowest mean.
+  \item \code{Metodo}: "Holm t-test".
+  \item \code{Termino}: the term being compared (e.g., "A", "B", or "A:B").
+  \item \code{MSerror}, \code{df_error}, \code{N}: useful for plots with error bars.
 }
 }
 \description{
@@ -39,9 +47,17 @@ resultado <- HolmTest(mod)
 summary(resultado)
 plot(resultado)
 
+# RCBD
+mod <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res <- HolmTest(mod, comparar = "as.factor(labor)")
+summary(res); plot(res)                # usa p_ajustada automaticamente
+
+# Factorial
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+resAB <- HolmTest(mod2, comparar = c("as.factor(labor)","Sexo"))
+summary(resAB, n = Inf); plot(resAB, horizontal = TRUE)
 
 }
 \references{
-Holm, S. (1979). A simple sequentially rejective multiple test procedure.
-\emph{Scandinavian Journal of Statistics}, 6(2), 65–70.
+Holm, S. (1979). A simple sequentially rejective multiple test procedure.Scandinavian Journal of Statistics, 6(2), 65–70.
 }
