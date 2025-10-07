@@ -67,7 +67,7 @@ plot.comparaciones <- function(x, alpha = 0.05,
   df_medias$Grupo <- factor(df_medias$Grupo, levels = df_medias$Grupo)
 
   rng  <- range(df_medias$Media, na.rm = TRUE); span <- diff(rng); if (span == 0) span <- max(1, abs(rng[2]))
-  pad  <- 0.04 * span
+  pad  <- 0.5 * span
   df_medias$y_lab <- df_medias$Media + ifelse(df_medias$Media >= 0, pad, -pad)
 
   # --- Robust SE bars ---

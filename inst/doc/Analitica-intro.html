@@ -12,7 +12,7 @@
 
 <meta name="author" content="Carlos Jiménez-Gallardo" />
 
-<meta name="date" content="2025-09-26" />
+<meta name="date" content="2025-10-03" />
 
 <title>Introduction to Analitica</title>
 
@@ -50,8 +50,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -62,7 +63,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -340,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Introduction to Analitica</h1>
 <h4 class="author">Carlos Jiménez-Gallardo</h4>
-<h4 class="date">2025-09-26</h4>
+<h4 class="date">2025-10-03</h4>
 
 
 <div id="TOC">
@@ -399,69 +400,98 @@ descripYG(d_e, vd = Sueldo_actual, vi = labor)
 Variance Tests</h1>
 <p>You can assess variance assumptions using manual implementations:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">Levene.Test</span>(Sueldo_actual <span class="sc">~</span> labor, <span class="at">data =</span> d_e)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] 36.089</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Levene (median) - global by cells&quot;</span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; df_between  df_within </span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;          2        471 </span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; [1] 51.18872</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; df_between  df_within </span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;          2        471 </span></span>
 <span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
 <span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heteroscedastic&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
 <span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Levene (median)&quot;</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heteroscedastic (cells)&quot;</span></span>
 <span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="fu">BartlettTest</span>(Sueldo_actual <span class="sc">~</span> labor, <span class="at">data =</span> d_e)</span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; [1] 194.6489</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heterocedastic&quot;</span></span>
-<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
-<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Bartlett&quot;</span></span>
-<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
-<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span>
-<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a><span class="fu">FKTest</span>(Sueldo_actual <span class="sc">~</span> labor, <span class="at">data =</span> d_e)</span>
-<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
-<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt; [1] 88.2881</span></span>
-<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
-<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
-<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
-<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
-<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
-<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
-<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heteroscedastic&quot;</span></span>
-<span id="cb4-59"><a href="#cb4-59" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-60"><a href="#cb4-60" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
-<span id="cb4-61"><a href="#cb4-61" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Fligner-Killeen&quot;</span></span>
-<span id="cb4-62"><a href="#cb4-62" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-63"><a href="#cb4-63" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
-<span id="cb4-64"><a href="#cb4-64" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span></code></pre></div>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; $Components</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; $Components$SS_between</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; [1] 5333173157</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; $Components$SS_within</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; [1] 24535917585</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; $Components$MS_between</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; [1] 2666586578</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; $Components$MS_within</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; [1] 52093243</span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; $Components$k_groups</span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; [1] 3</span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; $Components$N</span></span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; [1] 474</span></span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; $Components$Zbar</span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; [1] 6532.711</span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a><span class="co">#&gt; $decompose</span></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; $twoway</span></span>
+<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt; NULL</span></span>
+<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
+<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span>
+<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="fu">BartlettTest</span>(Sueldo_actual <span class="sc">~</span> labor, <span class="at">data =</span> d_e)</span>
+<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
+<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt; [1] 194.6489</span></span>
+<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
+<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-59"><a href="#cb4-59" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
+<span id="cb4-60"><a href="#cb4-60" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb4-61"><a href="#cb4-61" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-62"><a href="#cb4-62" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
+<span id="cb4-63"><a href="#cb4-63" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
+<span id="cb4-64"><a href="#cb4-64" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-65"><a href="#cb4-65" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
+<span id="cb4-66"><a href="#cb4-66" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heterocedastic&quot;</span></span>
+<span id="cb4-67"><a href="#cb4-67" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-68"><a href="#cb4-68" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
+<span id="cb4-69"><a href="#cb4-69" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Bartlett&quot;</span></span>
+<span id="cb4-70"><a href="#cb4-70" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-71"><a href="#cb4-71" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
+<span id="cb4-72"><a href="#cb4-72" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span>
+<span id="cb4-73"><a href="#cb4-73" tabindex="-1"></a><span class="fu">FKTest</span>(Sueldo_actual <span class="sc">~</span> labor, <span class="at">data =</span> d_e)</span>
+<span id="cb4-74"><a href="#cb4-74" tabindex="-1"></a><span class="co">#&gt; $Statistic</span></span>
+<span id="cb4-75"><a href="#cb4-75" tabindex="-1"></a><span class="co">#&gt; [1] 88.2881</span></span>
+<span id="cb4-76"><a href="#cb4-76" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-77"><a href="#cb4-77" tabindex="-1"></a><span class="co">#&gt; $df</span></span>
+<span id="cb4-78"><a href="#cb4-78" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb4-79"><a href="#cb4-79" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-80"><a href="#cb4-80" tabindex="-1"></a><span class="co">#&gt; $p_value</span></span>
+<span id="cb4-81"><a href="#cb4-81" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb4-82"><a href="#cb4-82" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-83"><a href="#cb4-83" tabindex="-1"></a><span class="co">#&gt; $Significance</span></span>
+<span id="cb4-84"><a href="#cb4-84" tabindex="-1"></a><span class="co">#&gt; [1] &quot;***&quot;</span></span>
+<span id="cb4-85"><a href="#cb4-85" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-86"><a href="#cb4-86" tabindex="-1"></a><span class="co">#&gt; $Decision</span></span>
+<span id="cb4-87"><a href="#cb4-87" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Heteroscedastic&quot;</span></span>
+<span id="cb4-88"><a href="#cb4-88" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-89"><a href="#cb4-89" tabindex="-1"></a><span class="co">#&gt; $Method</span></span>
+<span id="cb4-90"><a href="#cb4-90" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Fligner-Killeen&quot;</span></span>
+<span id="cb4-91"><a href="#cb4-91" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-92"><a href="#cb4-92" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
+<span id="cb4-93"><a href="#cb4-93" tabindex="-1"></a><span class="co">#&gt; [1] &quot;homocedasticidad&quot;</span></span></code></pre></div>
 </div>
 <div id="outlier-detection" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> 3. Outlier
@@ -509,7 +539,7 @@ Detection</h1>
 <span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; 11       1 - 3  36139.258 17.8034 89.71       0           ***</span></span>
 <span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 2        2 - 3  33038.909 16.2606 89.58       0           ***</span></span>
 <span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="fu">plot</span>(resultado)</span></code></pre></div>
-<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
 <p>Other methods include <code>TukeyTest()</code>,
 <code>ScheffeTest()</code>, <code>DuncanTest()</code>,
 <code>SNKTest()</code>, <code>T2Test()</code>, and

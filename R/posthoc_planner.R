@@ -1,65 +1,39 @@
-#' Post Hoc Planner for FWER and Test Recommendation v1.5
+#' Post Hoc Planner for FWER and Test Recommendation v1.6
 #'
-#' Computes the number of pairwise comparisons (\eqn{m}), expected FWER under independence
-#' (no adjustment, Bonferroni, Sidak) for the term(s) you plan to compare, and proposes a
-#' reasonable post hoc test (e.g., Tukey HSD, Holm, Gabriel, Duncan, LSD, Scheffe) depending
-#' on design size, (un)balanced group sizes, and variance assumptions.
+#' @description
+#' One-shot planner for factor or cell comparisons, reporting m, FWER,
+#' suggested adjustments (Bonferroni/Sidak) and a post hoc recommendation
+#' (Holm, Tukey, Duncan, Gabriel, Scheffe, SNK, etc.) before testing.
 #'
-#' Advadata:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAbElEQVR4Xs2RQQrAMAgEfZgf7W9LAguybljJpR3wEse5JOL3ZObDb4x1loDhHbBOFU6i2Ddnw2KNiXcdAXygJlwE8OFVBHDgKrLgSInN4WMe9iXiqIVsTMjH7z/GhNTEibOxQswcYIWYOR/zAjBJfiXh3jZ6AAAAAElFTkSuQmCCntages:
-#' - One-shot planning: know \eqn{m}, FWER (informative) and a suggested post hoc before testing.
-#' - Handles main effects or full-cell comparisons (interactions).
-#' - Output formatted by rows (metrics as rows; each unit as a column).
+#' @param model aov or lm object (complete model). Data are reconstructed with model.frame().
+#' @param compare Character with the name(s) of the factor(s) to compare:
+#'   - One name: main effect.
+#'   - Several names: if scope="cells" compares A:B:... cells; if scope="factor", reports each factor.
+#'   If omitted, uses all factors when scope="factor", or the first factor when scope="cells".
+#' @param alpha Overall significance level (FWER target), default 0.05.
+#' @param scope "factor" compares each factor separately; "cells" compares interaction cells.
+#' @param equal_var Logical; assume homoscedasticity (default TRUE).
+#' @param unequal_n Logical; expect moderate imbalance of group sizes (default FALSE).
+#' @param independence Logical; if TRUE reports FWER "under independence" (default TRUE).
+#' @param liberal_ok Logical; allows more liberal suggestions (LSD/Duncan/SNK) (default FALSE).
+#' @param orientation "rows" (metrics as rows, default) or "cols".
+#' @param digits Decimal places for numeric output, default 4.
+#' @param percent_digits Decimal places for percentages, default 1.
+#' @param observed_cells Logical; in scope="cells", count only observed cells (drop NA). Default TRUE.
 #'
-#' Disadvantages:
-#' - Heuristic recommendation (not a formal decision rule).
-#' - FWER values "under independence" are informative, not guaranteed when tests are dependent.
-#'
-#' @param modelo An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).
-#' @param comparar Character vector with the name(s) of the factor(s) to compare:
-#'   - One name: main effect (e.g., "treatment" or "A")
-#'   - Several names: if \code{scope="cells"} compares \code{A:B:...} cells;
-#'     if \code{scope="factor"}, reports each factor separately.
-#'   If omitted, uses all factors in \code{modelo$xlevels} when \code{scope="factor"},
-#'   or the first factor when \code{scope="cells"} unless multiple are provided.
-#' @param alpha Global significance level (FWER target), default \code{0.05}.
-#' @param scope \code{"factor"} compares each factor separately (main effects);
-#'   \code{"cells"} compares all interaction cells (full combination of \code{comparar}).
-#' @param equal_var Logical; assume homoscedasticity (default \code{TRUE}).
-#' @param unequal_n Logical; expect moderate group size imbalance (default \code{FALSE}).
-#' @param independence Logical; if \code{TRUE} report FWER "under independence" for Bonf/Sidak (default \code{TRUE}).
-#' @param liberal_ok Logical; allow more liberal suggestions (e.g., LSD/Duncan) when power is prioritized (default \code{FALSE}).
-#' @param orientation Output table orientation: \code{"rows"} (metrics as rows, default) or \code{"cols"}.
-#' @param digits Numeric formatting (non-count numeric columns), default \code{4}.
-#' @param percent_digits Digits for percentage rendering of FWERs, default \code{1}.
-#'
-#' @return A \code{data.frame}. By default (rows orientation), the first column is \code{Metrica}
-#'   and subsequent columns are "Unidades" (each factor or the full-cell unit).
-#'   Metrics include: number of levels \code{g}, comparisons \code{m}, global \eqn{\alpha},
-#'   Bonferroni/Sidak per-comparison \eqn{\alpha}, and FWERs (under independence).
-#'   Also includes a \code{Sugerencia post hoc} string with the recommended test.
-#'
-#' @references
-#' Hochberg, Y. & Tamhane, A. C. (1987). Multiple Comparison Procedures.
-#'
-#' Wiley. Shaffer, J. P. (1995). Multiple hypothesis testing. Annual Review of Psychology, 46, 561-584.
+#' @return data.frame.
+#'   - orientation="rows": first column "Metric", rest columns are units (factor/cells).
+#'   - orientation="cols": one row per unit, metrics as columns.
+#'   Includes: g levels, m comparisons, global alpha, Bonferroni/Sidak alphas,
+#'   FWERs (under independence), "Suggested p-value adjustment" and "Post hoc suggestion".
 #'
 #' @examples
-#' # DCA (one-way):
-#' # data(d_e, package = "Analitica")
-#' # mod1 <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
-#' # Posthoc_planner(mod1, comparar = "as.factor(labor)")
+#' # example code
 #'
-#' # RCBD / DBA: y ~ tratamiento + bloque
-#' # mod2 <- aov(y ~ as.factor(labor) + Sexo, data = d_e)
-#' # Posthoc_planner(mod2, comparar = "as.factor(labor)", scope = "factor")
-#'
-#' # Factorial: y ~ A * B  (compare full cells A:B)
-#' # mod3 <- aov(y ~ as.factor(labor) * Sexo, data = d_e)
-#' # Posthoc_planner(mod3, comparar = c("as.factor(labor)","Sexo"), scope = "cells")
 #'
 #' @export
-Posthoc_planner <- function(modelo,
-                            comparar = NULL,
+Posthoc_planner <- function(model,
+                            compare = NULL,
                             alpha = 0.05,
                             scope = c("factor","cells"),
                             equal_var = TRUE,
@@ -68,13 +42,48 @@ Posthoc_planner <- function(modelo,
                             liberal_ok = FALSE,
                             orientation = c("rows","cols"),
                             digits = 4,
-                            percent_digits = 1) {
+                            percent_digits = 1,
+                            observed_cells = TRUE) {
 
   scope <- match.arg(scope)
   orientation <- match.arg(orientation)
 
-  if (is.null(modelo$model))
-    stop("The 'modelo' object must contain the data (fit aov/lm with embedded data).")
+  # -------- Reconstruir datos del model --------
+  mf <- tryCatch(stats::model.frame(model), error = function(e) NULL)
+  if (is.null(mf)) stop("The model data could not be reconstructed with model.frame(model).")
+
+  # -------- Validaciones --------
+  if (!is.numeric(alpha) || length(alpha)!=1 || is.na(alpha) || alpha <= 0 || alpha >= 1)
+    stop("alpha must be a number in (0,1).")
+  if (digits < 0 || percent_digits < 0) stop("digits y percent_digits must be >= 0.")
+
+  # Detectar factores presentes
+  factor_names <- names(Filter(is.factor, mf))
+  if (length(factor_names) == 0)
+    stop("The model contains no factor predictors in the reconstructed data (model.frame).")
+
+  # Si compare es NULL
+  if (is.null(compare) || length(compare) == 0) {
+    if (scope == "factor") {
+      compare <- factor_names
+    } else { # "cells"
+      compare <- factor_names[1]
+    }
+  }
+  compare <- as.character(compare)
+
+  # Validar existencia y asegurar factor + droplevels
+  not_found <- setdiff(compare, names(mf))
+  if (length(not_found))
+    stop(sprintf(
+      "The following terms are not in the model data: %s. Available: %s.",
+      paste(not_found, collapse = ", "),
+      paste(names(mf), collapse = ", ")
+    ))
+  for (nm in compare) {
+    if (!is.factor(mf[[nm]])) mf[[nm]] <- factor(mf[[nm]])
+    mf[[nm]] <- droplevels(mf[[nm]])
+  }
 
   # -------- Helpers --------
   choose2     <- function(g) ifelse(g >= 2, g*(g-1)/2, 0)
@@ -82,74 +91,79 @@ Posthoc_planner <- function(modelo,
   alpha_bonf  <- function(alpha, m) ifelse(m > 0, alpha / m, NA_real_)
   alpha_sidak <- function(alpha, m) ifelse(m > 0, 1 - (1 - alpha)^(1/m), NA_real_)
 
+  # Elegir ajuste p-valor sugerido entre Bonferroni y Sidak (segun FWER)
+  choose_adjust <- function(alpha, m, independence) {
+    if (is.na(m) || m <= 1) return("-")
+    aB <- alpha_bonf(alpha, m)
+    aS <- alpha_sidak(alpha, m)
+
+    if (!independence) return(sprintf("Bonferroni (alpha* = %.6f)", aB))
+
+    fwerB <- 1 - (1 - aB)^m
+    fwerS <- 1 - (1 - aS)^m
+    tol <- 1e-12
+    okB <- (fwerB <= alpha + tol)
+    okS <- (fwerS <= alpha + tol)
+
+    if (okB && okS) {
+      if (abs(alpha - fwerS) <= abs(alpha - fwerB)) {
+        return(sprintf("Sidak (indep.) (alpha* = %.6f)", aS))
+      } else {
+        return(sprintf("Bonferroni (alpha* = %.6f)", aB))
+      }
+    } else if (okS) {
+      return(sprintf("Sidak (indep.) (alpha* = %.6f)", aS))
+    } else if (okB) {
+      return(sprintf("Bonferroni (alpha* = %.6f)", aB))
+    } else {
+      return(sprintf("Bonferroni (alpha* = %.6f)", aB))
+    }
+  }
+
+  # Recomendador de prueba post hoc (incluye Gabriel, Scheffe, SNK)
   recommend_test <- function(g, m, equal_var, unequal_n, scope, liberal_ok){
     if (!equal_var) {
-      return("Games-Howell (heterocedastico) o Holm (robusto)")
+      return("Games-Howell (heterocedastic) or Holm (robust)")
     }
     if (unequal_n) {
-      if (g <= 12) return("Gabriel (desbalance moderado) o Tukey HSD (Kramer) / Holm")
-      return("Holm (m grande) o Tukey HSD (Kramer)")
+      if (g <= 12) return("Gabriel (moderate imbalance) or Tukey-Kramer / Holm")
+      return("Holm (large m) or Tukey-Kramer")
     }
     # balanceado y homocedastico
     if (scope == "cells" && m > 45) {
-      return("Holm (potente) o Scheffe (contrastes generales)")
+      return("Holm (powerful) or Scheffe (many contrasts)")
     }
     if (m <= 6) {
-      return(if (liberal_ok) "LSD (gate F) o Tukey HSD / Holm"
-             else            "Tukey HSD o Holm (LSD si aceptas mayor Tipo I)")
+      if (liberal_ok) return("SNK or LSD (with F for gate) | Alternate: Tukey HSD / Holm")
+      return("Tukey HSD or Holm (LSD/SNK if you accept major Type I)")
     }
     if (m <= 20) {
-      return(if (liberal_ok) "Duncan (mas potente) o Tukey HSD / Holm"
-             else            "Holm (step-down) o Tukey HSD")
+      if (liberal_ok) return("SNK or Duncan (more powerful) | Alternative: Tukey HSD / Holm")
+      return("Holm (step-down) o Tukey HSD")
     }
-    if (m <= 45) return("Holm (step-down) o Tukey HSD")
-    "Holm (step-down) o Scheffe (si hay mas que pares)"
+    if (m <= 45) return("Holm (step-down) or Tukey HSD")
+    "Holm (step-down) or Scheffe (if there are more than pairs)"
   }
 
-  # -------- Parse factors / groups --------
-  xlv <- modelo$xlevels
-  if (is.null(xlv) || length(xlv) == 0) {
-    stop("Model has no factors in 'xlevels'. Convert categorical predictors to factor.")
-  }
-
-  mf <- modelo$model
-
-  # If comparar is NULL: for scope="factor" , then  all factors; for "cells" then first factor unless multiple supplied
-  if (is.null(comparar)) {
-    if (scope == "factor") {
-      comparar <- names(xlv)                      # all factors
-    } else { # "cells"
-      comparar <- names(xlv)[1]                   # first factor only (unless user provides several)
-    }
-  }
-  comparar <- as.character(comparar)
-
-  # Ensure the listed terms exist and are factors
-  for (nm in comparar) {
-    if (!nm %in% names(mf))
-      stop(sprintf("Term '%s' is not found in model data.", nm))
-    if (!is.factor(mf[[nm]])) mf[[nm]] <- factor(mf[[nm]])
-  }
-
-  # Count levels per requested units
+  # -------- Conteo de niveles / celdas --------
   level_count <- function(varname) nlevels(mf[[varname]])
 
-  # -------- Build per-unit summaries --------
   build_row <- function(label, g, alpha, equal_var, unequal_n, scope, independence, liberal_ok){
     m  <- choose2(g)
     aB <- alpha_bonf(alpha, m)
     aS <- alpha_sidak(alpha, m)
     data.frame(
-      Unidad = label,
-      `N niveles (g)` = g,
-      `Comparaciones (m)` = m,
+      Unit = label,
+      `N levels (g)` = g,
+      `Comparasions (m)` = m,
       `alpha global (FWER)` = alpha,
       `alpha_B = alpha/m (Bonf)` = aB,
       `FWER Bonf (indep.)` = if (independence) fwer_indep(aB, m) else NA_real_,
-      `alpha* de Sidak` = aS,
+      `alpha* Sidak` = aS,
       `FWER Sidak (indep.)` = if (independence) fwer_indep(aS, m) else NA_real_,
-      `FWER sin ajuste (indep.)` = if (independence) fwer_indep(alpha, m) else NA_real_,
-      `Sugerencia post hoc` = recommend_test(g, m, equal_var, unequal_n, scope, liberal_ok),
+      `FWER without (indep.)` = if (independence) fwer_indep(alpha, m) else NA_real_,
+      `Suggested p-value adj` = choose_adjust(alpha, m, independence),
+      `Suggestion post hoc` = recommend_test(g, m, equal_var, unequal_n, scope, liberal_ok),
       check.names = FALSE
     )
   }
@@ -157,53 +171,68 @@ Posthoc_planner <- function(modelo,
   res_list <- list()
 
   if (scope == "factor") {
-    # One column per factor requested
-    for (nm in comparar) {
+    for (nm in compare) {
       g <- level_count(nm)
       res_list[[length(res_list)+1]] <-
         build_row(paste0("Factor: ", nm), g, alpha, equal_var, unequal_n, scope, independence, liberal_ok)
     }
-  } else { # "cells": full combination of provided factors
-    g_vec <- vapply(comparar, level_count, FUN.VALUE = numeric(1))
-    G <- prod(g_vec)
-    lbl <- paste0("Celdas (", paste(comparar, collapse=":"), ")")
+  } else { # "cells": combinaciin completa de los factores provistos
+    if (length(compare) < 2) {
+      g_vec <- vapply(compare, level_count, FUN.VALUE = numeric(1))
+      G <- prod(g_vec)
+    } else {
+      if (observed_cells) {
+        inter <- interaction(mf[compare], drop = TRUE, sep = ":")
+        G <- nlevels(inter)
+      } else {
+        g_vec <- vapply(compare, level_count, FUN.VALUE = numeric(1))
+        G <- prod(g_vec)
+      }
+    }
+    lbl <- paste0("Celdas (", paste(compare, collapse=":"), ")")
     res_list[[1]] <- build_row(lbl, G, alpha, equal_var, unequal_n, scope, independence, liberal_ok)
   }
 
   res_wide <- do.call(rbind, res_list)
   rownames(res_wide) <- NULL
 
-  # Nice column order
-  col_order <- c("Unidad","N niveles (g)","Comparaciones (m)","alpha global (FWER)",
-                 "alpha_B = alpha/m (Bonf)","FWER Bonf (indep.)",
-                 "alpha* de Sidak","FWER Sidak (indep.)",
-                 "FWER sin ajuste (indep.)","Sugerencia post hoc")
+  # Orden de columnas
+  col_order <- c(
+    "Unit","N levels (g)","Comparasions (m)","alpha global (FWER)",
+    "alpha_B = alpha/m (Bonf)","FWER Bonf (indep.)",
+    "alpha* Sidak","FWER Sidak (indep.)",
+    "FWER without adj (indep.)","Suggested p-value adj","Suggestion post hoc"
+  )
   col_order <- col_order[col_order %in% names(res_wide)]
   res_wide <- res_wide[, col_order, drop = FALSE]
 
-  if (orientation == "cols") return(res_wide)
+  if (orientation == "cols") {
+    attr(res_wide, "note") <- "FWER under independence is indicative; with actual dependence it may differ."
+    return(res_wide)
+  }
 
-  # -------- Row-oriented presentation (metrics as rows) --------
-  is_num <- sapply(res_wide, is.numeric)
+  # -------- Presentaciin por filas --------
+  is_num <- vapply(res_wide, is.numeric, logical(1))
   fmt_num <- function(x) ifelse(is.na(x), NA, formatC(x, format = "f", digits = digits))
   fmt_pct <- function(x) ifelse(is.na(x), NA, paste0(formatC(100*x, format = "f", digits = percent_digits), "%"))
 
-  pct_cols <- intersect(c("FWER Bonf (indep.)","FWER Sidak (indep.)","FWER sin ajuste (indep.)"),
-                        names(res_wide))
+  pct_cols <- intersect(
+    c("FWER Bonf (indep.)","FWER Sidak (indep.)","FWER without adj (indep.)"),
+    names(res_wide)
+  )
 
   res_fmt <- res_wide
   for (cl in names(res_fmt)) {
     if (cl %in% pct_cols) {
       res_fmt[[cl]] <- fmt_pct(res_fmt[[cl]])
-    } else if (is_num[cl] && cl != "N niveles (g)" && cl != "Comparaciones (m)") {
+    } else if (isTRUE(is_num[[cl]]) && !cl %in% c("N levels (g)", "Comparasions (m)")) {
       res_fmt[[cl]] <- fmt_num(res_fmt[[cl]])
     }
   }
 
   unidades <- res_fmt$Unidad
-  metricas <- setdiff(names(res_fmt), "Unidad")
+  metricas <- setdiff(names(res_fmt), "Unit")
 
-  # Use 'optional=TRUE' to avoid name mangling; no duplicate check.names here
   tabla_core <- as.data.frame(t(as.matrix(res_fmt[, metricas, drop = FALSE])),
                               optional = TRUE, stringsAsFactors = FALSE)
   colnames(tabla_core) <- unidades
@@ -216,13 +245,18 @@ Posthoc_planner <- function(modelo,
     stringsAsFactors = FALSE
   )
 
-  metrica_order <- c("N niveles (g)", "Comparaciones (m)", "alpha global (FWER)",
-                     "alpha_B = alpha/m (Bonf)", "FWER Bonf (indep.)",
-                     "alpha* de Sidak", "FWER Sidak (indep.)",
-                     "FWER sin ajuste (indep.)", "Sugerencia post hoc")
-  metrica_order <- metrica_order[metrica_order %in% tabla_rows$Metrica]
-  tabla_rows <- tabla_rows[match(metrica_order, tabla_rows$Metrica), , drop = FALSE]
+  # -------- Reordenamiento robusto (sin perder filas) --------
+  conocidas <- c("N levels (g)", "Comparasions (m)", "alpha global (FWER)",
+                 "alpha_B = alpha/m (Bonf)", "FWER Bonf (indep.)",
+                 "alpha* Sidak", "FWER Sidak (indep.)",
+                 "FWER without adj (indep.)", "Suggested p-value adj", "Suggestion post hoc")
+  extra <- setdiff(tabla_rows$Metrica, conocidas)
+  orden_final <- c(conocidas, extra)
+  idx <- match(orden_final, tabla_rows$Metrica)
+  idx <- idx[!is.na(idx)]
+  tabla_rows <- tabla_rows[idx, , drop = FALSE]
 
+  attr(tabla_rows, "note") <- "FWER under independence is indicative; with dependent tests it may not match."
   tabla_rows
 }
 

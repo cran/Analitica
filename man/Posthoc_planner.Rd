@@ -2,11 +2,11 @@
 % Please edit documentation in R/posthoc_planner.R
 \name{Posthoc_planner}
 \alias{Posthoc_planner}
-\title{Post Hoc Planner for FWER and Test Recommendation v1.5}
+\title{Post Hoc Planner for FWER and Test Recommendation v1.6}
 \usage{
 Posthoc_planner(
-  modelo,
-  comparar = NULL,
+  model,
+  compare = NULL,
   alpha = 0.05,
   scope = c("factor", "cells"),
   equal_var = TRUE,
@@ -15,78 +15,52 @@ Posthoc_planner(
   liberal_ok = FALSE,
   orientation = c("rows", "cols"),
   digits = 4,
-  percent_digits = 1
+  percent_digits = 1,
+  observed_cells = TRUE
 )
 }
 \arguments{
-\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
+\item{model}{aov or lm object (complete model). Data are reconstructed with model.frame().}
 
-\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
-- One name: main effect (e.g., "treatment" or "A")
-- Several names: if \code{scope="cells"} compares \code{A:B:...} cells;
-  if \code{scope="factor"}, reports each factor separately.
-If omitted, uses all factors in \code{modelo$xlevels} when \code{scope="factor"},
-or the first factor when \code{scope="cells"} unless multiple are provided.}
+\item{compare}{Character with the name(s) of the factor(s) to compare:
+- One name: main effect.
+- Several names: if scope="cells" compares A:B:... cells; if scope="factor", reports each factor.
+If omitted, uses all factors when scope="factor", or the first factor when scope="cells".}
 
-\item{alpha}{Global significance level (FWER target), default \code{0.05}.}
+\item{alpha}{Overall significance level (FWER target), default 0.05.}
 
-\item{scope}{\code{"factor"} compares each factor separately (main effects);
-\code{"cells"} compares all interaction cells (full combination of \code{comparar}).}
+\item{scope}{"factor" compares each factor separately; "cells" compares interaction cells.}
 
-\item{equal_var}{Logical; assume homoscedasticity (default \code{TRUE}).}
+\item{equal_var}{Logical; assume homoscedasticity (default TRUE).}
 
-\item{unequal_n}{Logical; expect moderate group size imbalance (default \code{FALSE}).}
+\item{unequal_n}{Logical; expect moderate imbalance of group sizes (default FALSE).}
 
-\item{independence}{Logical; if \code{TRUE} report FWER "under independence" for Bonf/Sidak (default \code{TRUE}).}
+\item{independence}{Logical; if TRUE reports FWER "under independence" (default TRUE).}
 
-\item{liberal_ok}{Logical; allow more liberal suggestions (e.g., LSD/Duncan) when power is prioritized (default \code{FALSE}).}
+\item{liberal_ok}{Logical; allows more liberal suggestions (LSD/Duncan/SNK) (default FALSE).}
 
-\item{orientation}{Output table orientation: \code{"rows"} (metrics as rows, default) or \code{"cols"}.}
+\item{orientation}{"rows" (metrics as rows, default) or "cols".}
 
-\item{digits}{Numeric formatting (non-count numeric columns), default \code{4}.}
+\item{digits}{Decimal places for numeric output, default 4.}
 
-\item{percent_digits}{Digits for percentage rendering of FWERs, default \code{1}.}
+\item{percent_digits}{Decimal places for percentages, default 1.}
+
+\item{observed_cells}{Logical; in scope="cells", count only observed cells (drop NA). Default TRUE.}
 }
 \value{
-A \code{data.frame}. By default (rows orientation), the first column is \code{Metrica}
-  and subsequent columns are "Unidades" (each factor or the full-cell unit).
-  Metrics include: number of levels \code{g}, comparisons \code{m}, global \eqn{\alpha},
-  Bonferroni/Sidak per-comparison \eqn{\alpha}, and FWERs (under independence).
-  Also includes a \code{Sugerencia post hoc} string with the recommended test.
+data.frame.
+  - orientation="rows": first column "Metric", rest columns are units (factor/cells).
+  - orientation="cols": one row per unit, metrics as columns.
+  Includes: g levels, m comparisons, global alpha, Bonferroni/Sidak alphas,
+  FWERs (under independence), "Suggested p-value adjustment" and "Post hoc suggestion".
 }
 \description{
-Computes the number of pairwise comparisons (\eqn{m}), expected FWER under independence
-(no adjustment, Bonferroni, Sidak) for the term(s) you plan to compare, and proposes a
-reasonable post hoc test (e.g., Tukey HSD, Holm, Gabriel, Duncan, LSD, Scheffe) depending
-on design size, (un)balanced group sizes, and variance assumptions.
-}
-\details{
-Advadata:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAbElEQVR4Xs2RQQrAMAgEfZgf7W9LAguybljJpR3wEse5JOL3ZObDb4x1loDhHbBOFU6i2Ddnw2KNiXcdAXygJlwE8OFVBHDgKrLgSInN4WMe9iXiqIVsTMjH7z/GhNTEibOxQswcYIWYOR/zAjBJfiXh3jZ6AAAAAElFTkSuQmCCntages:
-- One-shot planning: know \eqn{m}, FWER (informative) and a suggested post hoc before testing.
-- Handles main effects or full-cell comparisons (interactions).
-- Output formatted by rows (metrics as rows; each unit as a column).
-
-Disadvantages:
-- Heuristic recommendation (not a formal decision rule).
-- FWER values "under independence" are informative, not guaranteed when tests are dependent.
+One-shot planner for factor or cell comparisons, reporting m, FWER,
+suggested adjustments (Bonferroni/Sidak) and a post hoc recommendation
+(Holm, Tukey, Duncan, Gabriel, Scheffe, SNK, etc.) before testing.
 }
 \examples{
-# DCA (one-way):
-# data(d_e, package = "Analitica")
-# mod1 <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
-# Posthoc_planner(mod1, comparar = "as.factor(labor)")
+# example code
 
-# RCBD / DBA: y ~ tratamiento + bloque
-# mod2 <- aov(y ~ as.factor(labor) + Sexo, data = d_e)
-# Posthoc_planner(mod2, comparar = "as.factor(labor)", scope = "factor")
 
-# Factorial: y ~ A * B  (compare full cells A:B)
-# mod3 <- aov(y ~ as.factor(labor) * Sexo, data = d_e)
-# Posthoc_planner(mod3, comparar = c("as.factor(labor)","Sexo"), scope = "cells")
-
-}
-\references{
-Hochberg, Y. & Tamhane, A. C. (1987). Multiple Comparison Procedures.
-
-Wiley. Shaffer, J. P. (1995). Multiple hypothesis testing. Annual Review of Psychology, 46, 561-584.
 }

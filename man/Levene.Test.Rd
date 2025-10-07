@@ -2,18 +2,29 @@
 % Please edit documentation in R/LeveneTest.R
 \name{Levene.Test}
 \alias{Levene.Test}
-\title{Levene's Test for Homogeneity of Variances (Manual Implementation)}
+\title{Levene's Test for Homogeneity of Variances (Manual Implementation) v2.1}
 \usage{
-Levene.Test(formula, data, alpha = 0.05, center = "median")
+Levene.Test(
+  formula,
+  data,
+  alpha = 0.05,
+  center = "median",
+  decompose = TRUE,
+  anova_type = c("I", "II", "III")
+)
 }
 \arguments{
-\item{formula}{A formula of the form \code{y ~ group}, where \code{y} is numeric and \code{group} is a factor.}
+\item{formula}{y ~ factors (e.g., y ~ A or y ~ A * B).}
 
-\item{data}{A data frame containing the variables in the formula.}
+\item{data}{data.frame with variables in the formula.}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{alpha}{Significance level (default 0.05).}
 
-\item{center}{Character string: use \code{"median"} (default) or \code{"mean"} as the center for deviations.}
+\item{center}{"median" (Brown-Forsythe, default) or "mean" (classical Levene).}
+
+\item{decompose}{logical. If TRUE and there are >= 2 factors, run ANOVA on |Y - cell_center|.}
+
+\item{anova_type}{"I", "II" (2-way only) or "III" (any number of factors, no 'car').}
 }
 \value{
 An object of class \code{"homocedasticidad"}, containing:
@@ -31,9 +42,9 @@ This test evaluates the null hypothesis that the variances are equal across grou
 and is commonly used as a preliminary test before ANOVA or other parametric analyses.
 }
 \details{
-Levene’s test is based on an analysis of variance (ANOVA) applied to the absolute deviations
-from each group’s center (either the mean or, more robustly, the median).
-It is less sensitive to departures from normality than Bartlett’s test.
+Levene's test is based on an analysis of variance (ANOVA) applied to the absolute deviations
+from each group's center (either the mean or, more robustly, the median).
+It is less sensitive to departures from normality than Bartlett's test.
 
 Advantages:
 - Robust to non-normality, especially when using the median.
@@ -45,10 +56,18 @@ Disadvantages:
 }
 \examples{
 data(d_e, package = "Analitica")
-res <- Levene.Test(Sueldo_actual ~ labor, data = d_e)
+res <- Levene.Test(Sueldo_actual ~ as.factor(labor), data = d_e)
 summary(res)
+
+# RCBD
+resB<-Levene.Test(Sueldo_actual ~ as.factor(labor)+Sexo, data = d_e)
+summary(resB)
+
+# anova 2-ways
+resC<-Levene.Test(Sueldo_actual ~ as.factor(labor)*Sexo, data = d_e)
+summary(resC)
 
 }
 \references{
-Levene, H. (1960). "Robust Tests for Equality of Variances." In Contributions to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 278–292). Stanford University Press.
+Levene, H. (1960). "Robust Tests for Equality of Variances." In Contributions to Probability and Statistics: Essays in Honor of Harold Hotelling (pp.278-292). Stanford University Press.
 }

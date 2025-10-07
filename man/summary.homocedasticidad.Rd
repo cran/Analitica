@@ -2,20 +2,21 @@
 % Please edit documentation in R/summary_homocedasticidad.R
 \name{summary.homocedasticidad}
 \alias{summary.homocedasticidad}
-\title{Summary Method for Homoscedasticity Test Results}
+\title{Summary Method for Homoscedasticity Test Results (extended) v2.0}
 \usage{
-\method{summary}{homocedasticidad}(object, ...)
+\method{summary}{homocedasticidad}(object, digits = 4, ...)
 }
 \arguments{
 \item{object}{An object of class \code{"homocedasticidad"}.}
 
+\item{digits}{Number of digits for F; default 4.}
+
 \item{...}{Currently ignored.}
 }
 \value{
-Invisibly returns the input object (invisible). Printed output includes:
-test name, statistic, degrees of freedom, p-value, and decision at the 0.05 level.
+Invisibly returns the input object (invisible).
 }
 \description{
 Displays a summary of variance homogeneity tests such as Bartlett, Fligner-Killeen,
-or Levene, applied to a fitted formula using numeric data and groupings.
+or Levene (1-via global and if exists, factorial decomposition on |Y - centro_celda|).
 }
