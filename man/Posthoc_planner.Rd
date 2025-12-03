@@ -60,7 +60,70 @@ suggested adjustments (Bonferroni/Sidak) and a post hoc recommendation
 (Holm, Tukey, Duncan, Gabriel, Scheffe, SNK, etc.) before testing.
 }
 \examples{
-# example code
+## =========================
+## Ejemplo 1: One-way ANOVA
+## =========================
+# Datos: PlantGrowth (3 grupos balanceados)
+data(PlantGrowth)
+m1 <- aov(weight ~ group, data = PlantGrowth)
+# Comparar por factor (default scope="factor")
+Posthoc_planner(m1)
+# Variante: salida por columnas
+Posthoc_planner(m1, orientation = "cols")
+# Variante: alpha más estricto
+Posthoc_planner(m1, alpha = 0.01)
+
+## ==============================================
+## Ejemplo 2: Dos factores y comparación de celdas
+## ==============================================
+# Datos: ToothGrowth (suplemento x dosis)
+data(ToothGrowth)
+TG <- ToothGrowth
+TG$dose <- factor(TG$dose)  # tratar "dose" como factor
+m2 <- aov(len ~ supp * dose, data = TG)
+# scope="cells" compara celdas de la interacción (supp:dose)
+Posthoc_planner(
+  m2,
+compare = c("supp","dose"),
+scope   = "cells",        # comparar celdas
+observed_cells = TRUE     # contar solo celdas observadas (default)
+)
+# También puedes pedir el resumen por factor dentro del mismo modelo
+Posthoc_planner(
+m2,
+compare = c("supp","dose"),
+scope   = "factor"        # reporte por cada factor por separado
+)
 
 
+}
+\references{
+#' Bonferroni, C. (1936). *Teoria statistica delle classi e calcolo delle probabilità*.
+Pubblicazioni del R. Istituto Superiore di Scienze Economiche e Commerciali di Firenze.
+
+Fisher, R. A. (1935). *The design of experiments*. Oliver & Boyd.
+
+Duncan, D. B. (1955). Multiple range and multiple F tests. *Biometrics, 11*(1), 1–42.
+
+Gabriel, K. R. (1978). A simple method of multiple comparisons of means.
+*Journal of the American Statistical Association, 73*(364), 724–729.
+
+Games, P. A., & Howell, J. F. (1976). Pairwise multiple comparison procedures with
+unequal n’s and/or variances: A Monte Carlo study. *Journal of Educational Statistics, 1*(2), 113–125.
+
+Holm, S. (1979). A simple sequentially rejective multiple test procedure.
+*Scandinavian Journal of Statistics, 6*(2), 65–70.
+
+Newman, D. (1939). The distribution of range in samples from a normal population,
+expressed in terms of an independent estimate of standard deviation.
+*Biometrika, 31*(1/2), 20–36.
+
+Scheffé, H. (1953). A method for judging all contrasts in the analysis of variance.
+*Biometrika, 40*(1–2), 87–104.
+
+Šidák, Z. (1967). Rectangular confidence regions for the means of multivariate
+normal distributions. *Journal of the American Statistical Association, 62*(318), 626–633.
+
+Tukey, J. W. (1949). Comparing individual means in the analysis of variance.
+*Biometrics, 5*(2), 99–114.
 }

@@ -2,12 +2,17 @@
 % Please edit documentation in R/T2Test.R
 \name{T2Test}
 \alias{T2Test}
-\title{Tamhane's T2 Post Hoc Test}
+\title{Tamhane's T2 Post Hoc Test v2.2.0}
 \usage{
-T2Test(modelo, alpha = 0.05)
+T2Test(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm}.}
+\item{modelo}{An object of class \code{aov} or \code{lm} (full model: includes blocks, factors, etc.).}
+
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
 
 \item{alpha}{Significance level (default is 0.05).}
 }
@@ -15,10 +20,11 @@ T2Test(modelo, alpha = 0.05)
 An object of class \code{"tamhanet2"} and \code{"comparaciones"}, containing:
 \itemize{
   \item \code{Resultados}: A data frame with pairwise comparisons, mean differences,
-  t-values, degrees of freedom, p-values, and significance codes.
-  \item \code{Promedios}: A named numeric vector of group means.
-  \item \code{Orden_Medias}: A character vector with group names ordered from highest to lowest mean.
+        \code{t_value}, \code{gl}, \code{p_value}, and significance codes.
+  \item \code{Promedios}: A named numeric vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: Group names ordered from highest to lowest mean.
   \item \code{Metodo}: A character string indicating the method used ("Tamhane T2").
+  \item \code{Termino}: The term being compared (e.g., "A", "B", or "A:B").
 }
 }
 \description{
@@ -46,7 +52,22 @@ resultado <- T2Test(mod)
 summary(resultado)
 plot(resultado)
 
+# Con bloques, comparando solo el factor de interés
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res2 <- T2Test(mod2, comparar = "as.factor(labor)")
+summary(res2)
+plot(res2)
+
+# Modelo con interacción
+mod3 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+res3 <- T2Test(mod3, comparar = c("as.factor(labor)", "Sexo"))
+summary(res3)
+plot(res3)
+
+
 }
 \references{
-Tamhane, A. C. (1977). "Multiple comparisons in model I one-way ANOVA with unequal variances." \emph{Communications in Statistics - Theory and Methods}, 6(1), 15–32. <https://doi.org/10.1080/03610927708827524>
+Tamhane, A. C. (1977). "Multiple comparisons in model I one-way ANOVA
+with unequal variances." \emph{Communications in Statistics - Theory and Methods},
+6(1), 15–32. <https://doi.org/10.1080/03610927708827524>
 }

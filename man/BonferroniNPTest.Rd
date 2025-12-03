@@ -37,6 +37,7 @@ Advantages:
 Disadvantages:
 - Conservative with many groups.
 - Only valid for pairwise comparisons; does not support complex contrasts.
+- It is only useful in completely random or single-factor designs.
 }
 \examples{
 data(iris)

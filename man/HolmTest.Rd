@@ -2,7 +2,7 @@
 % Please edit documentation in R/HolmTest.R
 \name{HolmTest}
 \alias{HolmTest}
-\title{Holm-Adjusted Pairwise Comparisons v2.0}
+\title{Holm-Adjusted (Holm-Bonferroni) Pairwise Comparisons v2.0}
 \usage{
 HolmTest(modelo, comparar = NULL, alpha = 0.05)
 }

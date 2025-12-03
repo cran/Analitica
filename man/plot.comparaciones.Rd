@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_comparations.R
 \name{plot.comparaciones}
 \alias{plot.comparaciones}
-\title{Generic plot for multiple-comparison tests (with multcompView letters)}
+\title{Generic plot for multiple-comparison tests (with multcompView letters) v2.0.1}
 \usage{
 \method{plot}{comparaciones}(
   x,
@@ -11,17 +11,21 @@
   horizontal = FALSE,
   fill = "steelblue",
   label_size = 5,
+  label_color = "black",
   angle_x = 45,
   show_se = FALSE,
+  se_type = c("se", "ci95"),
+  pad_frac = 0.35,
+  errorbar_width = 0.2,
   ...
 )
 }
 \arguments{
-\item{x}{An object of class \code{comparaciones} (includes "bonferroni" or "tukey").}
+\item{x}{An object of class \code{comparaciones}.}
 
 \item{alpha}{Significance threshold for the letters (default 0.05).}
 
-\item{p_column}{Which p-value column to use: "auto" (detect), "p_ajustada", "p_value", or "p".}
+\item{p_column}{Which p-value column: "auto","p_ajustada","p_value","p".}
 
 \item{horizontal}{If TRUE, draw horizontal bars.}
 
@@ -29,9 +33,17 @@
 
 \item{label_size}{Letter size.}
 
+\item{label_color}{Letter color.}
+
 \item{angle_x}{Angle of x-axis labels (if \code{horizontal = FALSE}).}
 
-\item{show_se}{If TRUE and \code{x$MSerror} and \code{x$N} exist, draws standard error (SE) bars.}
+\item{show_se}{If TRUE and \code{x$MSerror}, \code{x$N} exist, draws error bars.}
+
+\item{se_type}{"se" (default) or "ci95".}
+
+\item{pad_frac}{Fraction of y-span used to place letters (default 0.35).}
+
+\item{errorbar_width}{Width of errorbar whiskers.}
 
 \item{...}{Not used.}
 }
@@ -39,5 +51,5 @@
 A \code{ggplot} object.
 }
 \description{
-Generic plot for multiple-comparison tests (with multcompView letters)
+Generic plot for multiple-comparison tests (with multcompView letters) v2.0.1
 }

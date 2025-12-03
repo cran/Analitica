@@ -13,6 +13,7 @@
 #' Disadvantages:
 #' - Conservative with many groups.
 #' - Only valid for pairwise comparisons; does not support complex contrasts.
+#' - It is only useful in completely random or single-factor designs.
 #'
 #' @references
 #' Wilcoxon, F. (1945). Individual Comparisons by Ranking Methods. \emph{Biometrics Bulletin}, 1(6), 80–83. \doi{10.2307/3001968}

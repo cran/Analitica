@@ -1,4 +1,4 @@
-#' Holm-Adjusted Pairwise Comparisons v2.0
+#' Holm-Adjusted (Holm-Bonferroni) Pairwise Comparisons v2.0
 #'
 #' Performs pairwise t-tests with p-values adjusted using Holm’s sequential method.
 #'

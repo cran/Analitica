@@ -34,6 +34,7 @@ Advantages:
 Disadvantages:
 - Only valid with equal group sizes.
 - No p-values are directly calculated (based on critical differences only).
+- It is only useful in completely random or single-factor designs.
 }
 \examples{
 set.seed(123)

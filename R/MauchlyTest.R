@@ -46,6 +46,7 @@
 #' )
 #' res <- MauchlyTest(y ~ within | id, data = d, do_print = TRUE)
 #' summary(res)
+#'
 #' @export
 MauchlyTest <- function(formula, data, alpha = 0.05, digits = 4, do_print = TRUE) {
 
@@ -196,5 +197,3 @@ summary.esfericidad <- function(object, digits = 4, ...) {
   invisible(object)
 }
 
-# USO con tus nombres:
-# mauchly_manual(datos, id = "muestra", within = "orden", dv = "Pconc")

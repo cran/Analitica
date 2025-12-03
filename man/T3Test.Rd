@@ -2,12 +2,17 @@
 % Please edit documentation in R/T3Test.R
 \name{T3Test}
 \alias{T3Test}
-\title{Dunnett's T3 Post Hoc Test}
+\title{Dunnett's T3 Post Hoc Test v2.2.0}
 \usage{
-T3Test(modelo, alpha = 0.05)
+T3Test(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object of class \code{aov} or \code{lm}.}
+\item{modelo}{An object of class \code{aov} or \code{lm} (full model: includes blocks, factors, etc.).}
+
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
 
 \item{alpha}{Significance level (default is 0.05).}
 }
@@ -15,10 +20,11 @@ T3Test(modelo, alpha = 0.05)
 An object of class \code{"dunnettt3"} and \code{"comparaciones"}, containing:
 \itemize{
   \item \code{Resultados}: A data frame with pairwise comparisons, mean differences,
-  q-values, degrees of freedom, p-values, and significance indicators.
-  \item \code{Promedios}: A named numeric vector of group means.
+        \code{q_value}, \code{gl}, \code{p_value}, and significance indicators.
+  \item \code{Promedios}: A named numeric vector of group means as defined by \code{comparar}.
   \item \code{Orden_Medias}: A character vector of group names ordered from highest to lowest mean.
   \item \code{Metodo}: A character string with the test name ("Dunnett T3").
+  \item \code{Termino}: The term being compared (e.g., "A", "B", or "A:B").
 }
 }
 \description{
@@ -43,7 +49,21 @@ resultado <- T3Test(mod)
 summary(resultado)
 plot(resultado)
 
+# Con bloques, comparando solo el factor de interés
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res2 <- T3Test(mod2, comparar = "as.factor(labor)")
+summary(res2)
+plot(res2)
+
+# Modelo con interacción
+mod3 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+res3 <- T3Test(mod3, comparar = c("as.factor(labor)", "Sexo"))
+summary(res3)
+plot(res3)
+
 }
 \references{
-Dunnett, C. W. (1980). "Pairwise multiple comparisons in the unequal variance case." \emph{Journal of the American Statistical Association}, 75(372), 796–800. <https://doi.org/10.1080/01621459.1980.10477558>
+Dunnett, C. W. (1980). "Pairwise multiple comparisons in the unequal variance case."
+\emph{Journal of the American Statistical Association}, 75(372), 796–800.
+<https://doi.org/10.1080/01621459.1980.10477558>
 }

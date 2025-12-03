@@ -15,6 +15,7 @@
 #' Disadvantages:
 #' - Sensitive to heteroscedasticity (non-constant variances).
 #' - Requires appropriate p-value adjustment to control the family-wise error rate.
+#' - It is only useful in completely random or single-factor designs.
 #'
 #' @param formula A formula of the form \code{y ~ group}, where \code{y} is a numeric variable
 #'        and \code{group} is a factor indicating group membership.

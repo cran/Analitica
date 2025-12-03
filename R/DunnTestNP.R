@@ -29,8 +29,6 @@
 #' @references
 #' Dunn, O. J. (1964). Multiple comparisons using rank sums. *Technometrics*, 6(3), 241–252. \doi{10.1080/00401706.1964.10490181}
 #'
-#' @seealso \code{\link{kruskal.test}}, \code{\link[dunn.test]{dunn.test}}
-#'
 #'@examples
 #'data(d_e, package = "Analitica")
 #'DunnTest(Sueldo_actual ~ labor, data = d_e)

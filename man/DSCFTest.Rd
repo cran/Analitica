@@ -2,27 +2,32 @@
 % Please edit documentation in R/DSCFTest.R
 \name{DSCFTest}
 \alias{DSCFTest}
-\title{Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric)}
+\title{Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric) v2.0.3}
 \usage{
-DSCFTest(formula, data, alpha = 0.05, method.p = "holm")
+DSCFTest(
+  formula,
+  data,
+  alpha = 0.05,
+  method.p = "holm",
+  na.rm = TRUE,
+  include_kw = TRUE
+)
 }
 \arguments{
-\item{formula}{A formula of the form \code{y ~ group}.}
+\item{formula}{y ~ group}
 
-\item{data}{A data frame containing the variables.}
+\item{data}{data.frame con las variables}
 
-\item{alpha}{Significance level (default is 0.05).}
+\item{alpha}{nivel (0.05 por defecto)  just for the little star}
 
-\item{method.p}{Method for p-value adjustment (default is "holm").}
+\item{method.p}{adjustment method (default "holm")}
+
+\item{na.rm}{remove NA (TRUE by default)}
+
+\item{include_kw}{if TRUE, add summary of Kruskal-Wallis test}
 }
 \value{
-An object of class \code{"dscf"} and \code{"comparaciones"}, including:
-\itemize{
-  \item \code{Resultados}: Data frame with comparisons, z-statistics, p-values, adjusted p-values, and significance levels.
-  \item \code{Promedios}: Mean ranks of each group.
-  \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
-  \item \code{Metodo}: "DSCF (no paramétrico)".
-}
+objeto con clases c("comparaciones","dscf")
 }
 \description{
 Robust non-parametric method for multiple comparisons after Kruskal-Wallis.
@@ -36,13 +41,13 @@ Advantages:
 Disadvantages:
 - Computationally more complex.
 - Less commonly available in standard software.
+- It is only useful in completely random or single-factor designs.
 }
 \examples{
 data(d_e, package = "Analitica")
 DSCFTest(Sueldo_actual ~ labor, data = d_e)
 
-
 }
 \references{
-Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), Contributions to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 198–202). Stanford University Press.
+Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), Contribution1s to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 198 - 202). Stanford University Press.
 }

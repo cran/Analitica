@@ -54,6 +54,7 @@ d <- data.frame(
 )
 res <- MauchlyTest(y ~ within | id, data = d, do_print = TRUE)
 summary(res)
+
 }
 \references{
 Mauchly, J. W. (1940). Significance test for sphericity of a normal n-variate distribution. The Annals of Mathematical Statistics, 11(2), 204–209. https://doi.org/10.1214/aoms/1177731915

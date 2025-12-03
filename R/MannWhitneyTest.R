@@ -11,6 +11,7 @@
 #' Disadvantages:
 #' - Only compares two groups at a time.
 #' - Sensitive to unequal variances or shapes.
+#' - It is only useful in completely random or single-factor designs.
 #'
 #' This implementation allows one- or two-sided alternatives and optionally applies a continuity correction.
 #'

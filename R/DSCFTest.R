@@ -1,4 +1,4 @@
-#' Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric)
+#' Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric) v2.0.3
 #'
 #' Robust non-parametric method for multiple comparisons after Kruskal-Wallis.
 #' Uses rank-based pairwise tests with a pooled variance estimate.
@@ -10,95 +10,112 @@
 #' Disadvantages:
 #' - Computationally more complex.
 #' - Less commonly available in standard software.
+#' - It is only useful in completely random or single-factor designs.
 #'
-#' @param formula A formula of the form \code{y ~ group}.
-#' @param data A data frame containing the variables.
-#' @param alpha Significance level (default is 0.05).
-#' @param method.p Method for p-value adjustment (default is "holm").
-#'
-#' @return An object of class \code{"dscf"} and \code{"comparaciones"}, including:
-#' \itemize{
-#'   \item \code{Resultados}: Data frame with comparisons, z-statistics, p-values, adjusted p-values, and significance levels.
-#'   \item \code{Promedios}: Mean ranks of each group.
-#'   \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
-#'   \item \code{Metodo}: "DSCF (no paramétrico)".
-#' }
-#'
-#' @references Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), Contributions to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 198–202). Stanford University Press.
+#' @references Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), Contribution1s to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 198 - 202). Stanford University Press.
 #'
 #'@examples
 #'data(d_e, package = "Analitica")
 #'DSCFTest(Sueldo_actual ~ labor, data = d_e)
 #'
+#' @param formula  y ~ group
+#' @param data     data.frame con las variables
+#' @param alpha    nivel (0.05 por defecto)  just for the little star
+#' @param method.p adjustment method (default "holm")
+#' @param na.rm    remove NA (TRUE by default)
+#' @param include_kw if TRUE, add summary of Kruskal-Wallis test
+#'
+#' @return objeto con clases c("comparaciones","dscf")
 #'
 #' @export
-#' @importFrom stats pnorm p.adjust
+#' @importFrom stats pnorm p.adjust kruskal.test model.frame
 #' @importFrom utils combn
-
-DSCFTest <- function(formula, data, alpha = 0.05, method.p = "holm") {
+DSCFTest <- function(formula, data, alpha = 0.05, method.p = "holm",
+                     na.rm = TRUE, include_kw = TRUE) {
   mf <- model.frame(formula, data)
-  respuesta <- mf[[1]]
-  grupo <- as.factor(mf[[2]])
+  y <- mf[[1]]
+  g <- as.factor(mf[[2]])
 
-  niveles <- levels(grupo)
+  if (na.rm) {
+    keep <- !(is.na(y) | is.na(g))
+    y <- y[keep]; g <- g[keep]
+  }
+  if (!is.numeric(y)) stop("The answer must be numerical.")
+  if (nlevels(g) < 2L) stop("at least 2 groups are required.")
+
+  niveles <- levels(g)
   k <- length(niveles)
-  N <- length(respuesta)
-  ranks <- rank(respuesta)
-  n <- table(grupo)
-  Rj <- tapply(ranks, grupo, mean)
+  N <- length(y)
 
-  comparaciones <- combn(niveles, 2, simplify = FALSE)
+  ## Rangos globales (promedio en empates)
+  r <- rank(y, ties.method = "average")
+
+  ## Medias de rangos y tamanos por grupo
+  split_r <- split(r, g)
+  n_j <- vapply(split_r, length, integer(1))
+  Rbar_j <- vapply(split_r, mean, numeric(1))
+
+  ## Varianza pooled de rangos dentro de grupos:
+  ## S^2 = sum_j sum_i (R_ij - Rbar_j)^2 / (N - k)
+  ss_within <- sum(vapply(names(split_r), function(nm) {
+    rx <- split_r[[nm]]
+    sum( (rx - mean(rx))^2 )
+  }, numeric(1)))
+  S2 <- ss_within / (N - k)
+
+  ## Correccion por empates (Critchlow–Fligner):
+  ## T = 1 - sum(t^3 - t)/(N^3 - N)    donde t = tamanos de cada empate en y
+  tab <- table(y)
+  tie_term <- if (any(tab > 1L)) sum(tab^3 - tab) else 0
+  T_corr <- 1 - tie_term / (N^3 - N)
+  if (T_corr <= 0) warning("Degenerate tie correction; check the data.")
+  S2_t <- S2 / T_corr
+
+  ## Todas las comparaciones por pares
+  pares <- utils::combn(niveles, 2, simplify = FALSE)
+
+  z_vals <- numeric(length(pares))
+  p_vals <- numeric(length(pares))
+  comp_lab <- character(length(pares))
+
+  for (i in seq_along(pares)) {
+    g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
+    dif <- abs(Rbar_j[g1] - Rbar_j[g2])
+    se  <- sqrt(S2_t * (1 / n_j[g1] + 1 / n_j[g2]))
+    z   <- dif / se
+    z_vals[i] <- z
+    p_vals[i] <- 2 * (1 - pnorm(z))
+    comp_lab[i] <- paste(g1, g2, sep = " - ")
+  }
+
+  p_adj <- p.adjust(p_vals, method = method.p)
+  sig <- ifelse(p_adj < 0.001, "***",
+                ifelse(p_adj < 0.01,  "**",
+                       ifelse(p_adj < 0.05,  "*",  "ns")))
+
   resultados <- data.frame(
-    Comparacion = character(),
-    z = numeric(),
-    p_value = numeric(),
-    p_ajustada = numeric(),
-    Significancia = character(),
+    Comparacion   = comp_lab,
+    z             = round(z_vals, 4),
+    p_value       = round(p_vals, 6),
+    p_ajustada    = round(p_adj, 6),
+    Significancia = sig,
     stringsAsFactors = FALSE
   )
 
-  S2 <- (sum(ranks^2) - N * (N + 1)^2 / 4) / (N - 1)
-
-  z_vals <- numeric(length(comparaciones))
-  p_vals <- numeric(length(comparaciones))
-
-  for (i in seq_along(comparaciones)) {
-    par <- comparaciones[[i]]
-    g1 <- par[1]; g2 <- par[2]
-    ni <- n[g1]; nj <- n[g2]
-    Ri <- Rj[g1]; Rj_ <- Rj[g2]
-
-    dif <- abs(Ri - Rj_)
-    se <- sqrt(S2 * (1 / ni + 1 / nj))
-    z <- dif / se
-    p <- 2 * (1 - pnorm(z))
-
-    z_vals[i] <- z
-    p_vals[i] <- p
-  }
-
-  p_ajustada <- p.adjust(p_vals, method = method.p)
-  sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01, "**",
-                       ifelse(p_ajustada < 0.05, "*", "ns")))
-
-  for (i in seq_along(comparaciones)) {
-    comp <- paste(sort(comparaciones[[i]]), collapse = " - ")
-    resultados[i, ] <- list(
-      Comparacion = comp,
-      z = round(z_vals[i], 4),
-      p_value = round(p_vals[i], 4),
-      p_ajustada = round(p_ajustada[i], 4),
-      Significancia = sig[i]
-    )
-  }
-
   out <- list(
-    Resultados = resultados,
-    Promedios = Rj,
-    Orden_Medias = names(sort(Rj, decreasing = TRUE)),
-    Metodo = "DSCF (no parametrico)"
+    Resultados    = resultados[order(p_adj, z_vals, decreasing = FALSE), ],
+    Promedios     = Rbar_j,
+    Orden_Medias  = names(sort(Rbar_j, decreasing = TRUE)),
+    N_por_grupo   = n_j,
+    Parametros    = list(N = N, k = k, S2 = S2, T_corr = T_corr, S2_t = S2_t),
+    Metodo        = "DSCF (in the parametric)",
+    Ajuste        = method.p
   )
+
+  if (isTRUE(include_kw)) {
+    out$KruskalWallis <- stats::kruskal.test(y ~ g)
+  }
+
   class(out) <- c("comparaciones", "dscf")
-  return(out)
+  out
 }

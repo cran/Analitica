@@ -10,6 +10,7 @@
 #' Disadvantages:
 #' - Only valid with equal group sizes.
 #' - No p-values are directly calculated (based on critical differences only).
+#' - It is only useful in completely random or single-factor designs.
 #'
 #' @param formula A formula of the form \code{y ~ group}.
 #' @param data A data frame containing the variables.

@@ -2,12 +2,17 @@
 % Please edit documentation in R/GamesHowellTest.R
 \name{GHTest}
 \alias{GHTest}
-\title{Games-Howell Post Hoc Test}
+\title{Games-Howell Post Hoc Test v.2.2.0}
 \usage{
-GHTest(modelo, alpha = 0.05)
+GHTest(modelo, comparar = NULL, alpha = 0.05)
 }
 \arguments{
-\item{modelo}{An object from \code{aov} or \code{lm}.}
+\item{modelo}{An \code{aov} or \code{lm} object (full model: includes blocks, factors, etc.).}
+
+\item{comparar}{Character vector with the name(s) of the factor(s) to compare:
+- One name: main effect (e.g., "treatment" or "A")
+- Several names: interaction (e.g., \code{c("A","B")} for \code{A:B})
+If omitted, it uses the first factor in \code{modelo$xlevels}.}
 
 \item{alpha}{Significance level (default is 0.05).}
 }
@@ -15,10 +20,13 @@ GHTest(modelo, alpha = 0.05)
 An object of class \code{"gameshowell"} and \code{"comparaciones"},
 which contains:
 \itemize{
-  \item \code{Resultados}: A data frame with pairwise comparisons, including mean differences, t-values, degrees of freedom, p-values, and significance labels.
-  \item \code{Promedios}: A named numeric vector of group means.
-  \item \code{Orden_Medias}: A character vector with group names ordered by their means.
+  \item \code{Resultados}: A data frame with pairwise comparisons, including:
+        \code{Comparacion}, \code{Diferencia}, \code{t_value}, \code{gl},
+        \code{p_value}, and \code{Significancia}.
+  \item \code{Promedios}: A named numeric vector of group means as defined by \code{comparar}.
+  \item \code{Orden_Medias}: Group names ordered from highest to lowest mean.
   \item \code{Metodo}: A character string indicating the method used ("Games-Howell").
+  \item \code{Termino}: The term being compared (e.g., "A", "B", or "A:B").
 }
 }
 \description{
@@ -38,10 +46,29 @@ Disadvantages:
 \examples{
 data(d_e, package = "Analitica")
 mod <- aov(Sueldo_actual ~ as.factor(labor), data = d_e)
+# Comparación sobre el primer factor del modelo
 resultado <- GHTest(mod)
 summary(resultado)
 plot(resultado)
+
+# Con bloques, comparando solo el factor de interés
+mod2 <- aov(Sueldo_actual ~ as.factor(labor) + Sexo, data = d_e)
+res2 <- GHTest(mod2, comparar = "as.factor(labor)")
+summary(res2)
+plot(res2)
+
+# Modelo con interacción
+mod3 <- aov(Sueldo_actual ~ as.factor(labor) * Sexo, data = d_e)
+# efecto principal
+resA <- GHTest(mod3, comparar = "as.factor(labor)")
+# interacción
+resAB <- GHTest(mod3, comparar = c("as.factor(labor)", "Sexo"))
+summary(resAB)
+plot(resAB)
 }
 \references{
-Games, P. A., & Howell, J. F. (1976). "Pairwise Multiple Comparison Procedures with Unequal N's and/or Variances: A Monte Carlo Study". Journal of Educational Statistics, 1(2), 113–125. <https://doi.org/10.1002/j.2162-6057.1976.tb00211.x>
+Games, P. A., & Howell, J. F. (1976).
+"Pairwise Multiple Comparison Procedures with Unequal N's and/or Variances:
+A Monte Carlo Study". Journal of Educational Statistics, 1(2), 113–125.
+<https://doi.org/10.1002/j.2162-6057.1976.tb00211.x>
 }

@@ -42,6 +42,7 @@ Advantages:
 Disadvantages:
 - Sensitive to heteroscedasticity (non-constant variances).
 - Requires appropriate p-value adjustment to control the family-wise error rate.
+- It is only useful in completely random or single-factor designs.
 }
 \examples{
 data(d_e, package = "Analitica")
