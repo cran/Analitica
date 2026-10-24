@@ -17,8 +17,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom tidyselect all_of
 #' @importFrom stats IQR median quantile sd
-#' @importFrom ggplot2 ggplot aes geom_histogram geom_boxplot
-#'             theme_minimal theme_classic xlab ylab labs
+#' @importFrom ggplot2 ggplot aes geom_histogram geom_boxplot theme_minimal theme_classic xlab ylab labs
 #' @importFrom ggridges geom_density_ridges2
 #' @importFrom moments kurtosis skewness
 #' @importFrom rlang sym

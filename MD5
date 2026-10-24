@@ -1,10 +1,10 @@
-b665bc0072ac7fbbb98e5b437bd11fd1 *DESCRIPTION
+864cee8fcb1d880ce1f8271e3e65802a *DESCRIPTION
 bf5724d7b9a178856cb3cf5b9e162694 *LICENSE
 fa8e4de687a70f8b10c98a5adfbbba09 *NAMESPACE
 2e536cda1efe9b3869fead9ec61f4d93 *R/Analitica-package.R
 474e4f50f767d3ef7b3e08296f7a3d55 *R/BMTest_permutations.R
 8edaccd7c0339871a9d9bc79d12b4742 *R/Bartlett.R
-0ba23d73d0ae32e7a064ea710e4e0123 *R/BonferroniNPTest.R
+b19aae8cb076dcbbadeebaa7f91864f7 *R/BonferroniNPTest.R
 1263b0203935e92a018753a66e5d7796 *R/BonferroniTest.R
 451ea482b34e13c5bb57a6e3cd6322f8 *R/Brown_ForsythTest.R
 69d85a88ab1acf6db233714c9740cf08 *R/BrunnerMunzelTest.R
@@ -31,7 +31,7 @@ c51ef92476fd03c35940e1aa5ca6e2fb *R/T3Test.R
 786e38eb9e66e04e566897f1015bf359 *R/TukeyTest.R
 2a3ef747379f75f99f5cad9ea8b4b3bd *R/bar_error.R
 9789e8eea6a597937d3e206937f61e50 *R/d_e.R
-036c78bc1e55003bbe05ead72fa065fa *R/descripYG.R
+02baa79e5d43fe75db836038a0e1cad1 *R/descripYG.R
 78fb991bcd71ed0b0a8cd35c25ca3ef6 *R/globals.R
 c44ae82020fa79cab73a19037720ad4c *R/grubbs_outliers.R
 837c2c595e24e18d22660cec30ebca78 *R/plot_comparations.R
@@ -41,12 +41,12 @@ c44ae82020fa79cab73a19037720ad4c *R/grubbs_outliers.R
 012ef95cf2e92a8d79a238acd698860c *R/summary_comparations.R
 3cb0fc57a5848c42783c8011ed5af6e8 *R/summary_homocedasticidad.R
 1095ab6600de97d50452b76f46153545 *README.md
-d54042561b90aafd8a9a202ea63e1e4b *build/partial.rdb
-b876eff6ea0e5b30939f8effdf1e5210 *build/vignette.rds
+6af8e7644a2c366a25339b1923c9a048 *build/partial.rdb
+bb95f4d950e232a1a6ba6329f9b566cf *build/vignette.rds
 34a71149673b7739e8451beae596b256 *data/d_e.rda
 eb5fef2aa721319a481b0caa62a2235a *inst/doc/Analitica-intro.R
 72e3d40911209e9b66a79d5be091bfba *inst/doc/Analitica-intro.Rmd
-6fed73c1436ee0dc0a5f2eac44a798c7 *inst/doc/Analitica-intro.html
+a2b0909380bc5d7c40d4a59e47b373f3 *inst/doc/Analitica-intro.html
 50898803e20cf28d89b8bf35600e3f4d *man/Analitica.Rd
 bca8394cfb520550edd2264406243e0e *man/BMTest.Rd
 5943880ca91eac98b1f5551b47723deb *man/BMpTest.Rd

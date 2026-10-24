@@ -1,7 +1,7 @@
 Package: Analitica
 Title: Exploratory Data Analysis, Group Comparison Tools, and Other
         Procedures
-Version: 2.2.0
+Version: 2.3.0
 Authors@R: person("Carlos", "Jiménez-Gallardo", email = "carlos.jimenez@ufrontera.cl", role = c("aut", "cre"))
 Description: Provides a comprehensive set of tools for descriptive statistics,
     graphical data exploration, outlier detection, homoscedasticity testing, and
@@ -16,16 +16,16 @@ Description: Provides a comprehensive set of tools for descriptive statistics,
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.3
 Depends: R (>= 4.4)
 Imports: ggplot2, dplyr, tidyr, ggridges, patchwork, moments, magrittr,
         rlang, tidyselect, multcompView, stats,
 Suggests: car, knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2025-12-02 17:50:03 UTC; carlo
+Packaged: 2026-10-24 14:36:07 UTC; carlo
 Author: Carlos Jiménez-Gallardo [aut, cre]
 Maintainer: Carlos Jiménez-Gallardo <carlos.jimenez@ufrontera.cl>
 Repository: CRAN
-Date/Publication: 2025-12-03 07:30:02 UTC
+Date/Publication: 2026-10-24 15:20:09 UTC

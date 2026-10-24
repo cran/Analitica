@@ -100,3 +100,4 @@ BonferroniNPTest <- function(formula, data, alpha = 0.05) {
   class(out) <- c("comparaciones", "bonferroni_np")
   return(out)
 }
+
