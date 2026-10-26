@@ -118,7 +118,7 @@ GHTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   orden_medias <- order(medias, decreasing = TRUE)
   etiquetas_ordenadas <- nombres_grupos[orden_medias]
 
-  comparaciones <- combn(nombres_grupos, 2, simplify = FALSE)
+  comparaciones <- .pares_ordenados(medias)
 
   resultados <- data.frame(
     Comparacion = character(),
@@ -129,6 +129,8 @@ GHTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     Significancia = character(),
     stringsAsFactors = FALSE
   )
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (par in comparaciones) {
     g1 <- par[1]
@@ -146,13 +148,11 @@ GHTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     t_val <- dif / se_ij
     p_val <- 2 * stats::pt(-abs(t_val), df = gl)  # two-tailed
 
-    sig <- ifelse(p_val < 0.001, "***",
-                  ifelse(p_val < 0.01,  "**",
-                         ifelse(p_val < 0.05,   "*", "ns")))
+    sig <- .sig_stars(p_val, alpha)
 
-    # Ordenar nombres para coincidir con plot.comparacion()
-    nombres_ordenados <- sort(c(g1, g2))
-    comparacion <- paste(nombres_ordenados, collapse = " - ")
+    comparacion <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p_val))
 
     resultados <- rbind(
       resultados,
@@ -175,7 +175,8 @@ GHTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     Metodo       = "Games-Howell",
     Termino      = term_label
   )
-  class(out) <- c("comparaciones", "gameshowell")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("gameshowell", "comparaciones")
 
   return(out)
 }

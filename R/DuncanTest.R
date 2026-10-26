@@ -104,7 +104,7 @@ DuncanTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   SE_ij <- function(g1, g2) sqrt(MSerror * (1 / n[g1] + 1 / n[g2]))
 
   # Todas las comparaciones
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
 
   # Para DMRT se ordenan las medias (ascendente) para calcular r = |pos2 - pos1| + 1
   ordenado_asc <- names(sort(medias, decreasing = FALSE))
@@ -117,6 +117,8 @@ DuncanTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     Significancia = character(length(pares)),
     stringsAsFactors = FALSE
   )
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]
@@ -137,11 +139,11 @@ DuncanTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     q_obs <- dif * sqrt(2) / se_val
     p_val <- 1 - stats::ptukey(q_obs, r, df_error)
 
-    sig <- ifelse(p_val < 0.001, "***",
-                  ifelse(p_val < 0.01,  "**",
-                         ifelse(p_val < 0.05,   "*", "ns")))
+    sig <- .sig_stars(p_val, alpha)
 
-    resultados$Comparacion[i]   <- paste(sort(c(g1, g2)), collapse = " - ")
+    resultados$Comparacion[i]   <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p_val))
     resultados$Diferencia[i]    <- round(dif, 4)
     resultados$Valor_Critico[i] <- round(valor_critico <- valor_crit, 4)
     resultados$p_value[i]       <- round(p_val, 4)
@@ -158,6 +160,7 @@ DuncanTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "duncan")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("duncan", "comparaciones")
   return(out)
 }

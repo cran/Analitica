@@ -4,6 +4,9 @@
 #' with Bonferroni correction for multiple testing.
 #'
 #' Suitable for non-parametric data where ANOVA assumptions are violated.
+#' Groups are ordered from highest to lowest mean rank, and each comparison is
+#' reported as "higher - lower", so the W statistic always refers to the first
+#' group of the pair.
 #'
 #' Advantages:
 #' - Simple and intuitive non-parametric alternative to ANOVA post hoc tests.
@@ -26,12 +29,14 @@
 #' @param data A data frame containing the variables.
 #' @param alpha Significance level (default is 0.05).
 #'
-#' @return An object of class \code{"bonferroni_np"} and \code{"comparaciones"}, containing:
+#' @return An object of class \code{"bonferroni_np"}, \code{"comparaciones_np"} and \code{"comparaciones"}, containing:
 #' \itemize{
-#'   \item \code{Resultados}: Data frame with comparisons, W-statistics, raw and adjusted p-values, and significance levels.
-#'   \item \code{Promedios}: Mean ranks of each group.
-#'   \item \code{Orden_Medias}: Group names ordered from highest to lowest rank.
+#'   \item \code{Resultados}: Data frame with comparisons (ordered from highest to lowest
+#'         mean rank), W-statistics, raw and adjusted p-values, and significance levels.
+#'   \item \code{Promedios}: Mean ranks of each group, sorted from highest to lowest.
+#'   \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
 #'   \item \code{Metodo}: Name of the method used ("Bonferroni (non-parametric)").
+#'   \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
 #' }
 #'
 #' @examples
@@ -39,65 +44,65 @@
 #' BonferroniNPTest(Sepal.Length ~ Species, data = iris)
 #'
 #' @export
-#' @importFrom stats wilcox.test p.adjust
+#' @importFrom stats wilcox.test p.adjust model.frame
 #' @importFrom utils combn
 
 BonferroniNPTest <- function(formula, data, alpha = 0.05) {
   mf <- model.frame(formula, data)
   respuesta <- mf[[1]]
-  grupo <- as.factor(mf[[2]])
+  grupo <- droplevels(as.factor(mf[[2]]))
+  if (nlevels(grupo) < 2) stop("At least 2 groups are required.")
 
-  niveles <- levels(grupo)
+  # Rangos globales y rango promedio por grupo
   ranks <- rank(respuesta)
   Rj <- tapply(ranks, grupo, mean)
 
-  comparaciones <- combn(niveles, 2, simplify = FALSE)
-  resultados <- data.frame(
-    Comparacion = character(),
-    W = numeric(),
-    p_value = numeric(),
-    p_ajustada = numeric(),
-    Significancia = character(),
-    stringsAsFactors = FALSE
-  )
+  # Orden de mayor a menor rango promedio
+  Rj_ord <- sort(Rj, decreasing = TRUE)
+  niveles_ord <- names(Rj_ord)
 
-  w_vals <- numeric(length(comparaciones))
-  p_vals <- numeric(length(comparaciones))
+  # Pares en ese orden: g1 siempre tiene mayor rango promedio que g2
+  comparaciones <- combn(niveles_ord, 2, simplify = FALSE)
+  k <- length(comparaciones)
 
-  for (i in seq_along(comparaciones)) {
-    par <- comparaciones[[i]]
-    g1 <- par[1]; g2 <- par[2]
-    datos_g1 <- respuesta[grupo == g1]
-    datos_g2 <- respuesta[grupo == g2]
+  w_vals <- numeric(k)
+  p_vals <- numeric(k)
+  etiquetas <- character(k)
 
-    test <- wilcox.test(datos_g1, datos_g2, exact = FALSE, correct = FALSE)
-    w_vals[i] <- test$statistic
+  for (i in seq_len(k)) {
+    g1 <- comparaciones[[i]][1]
+    g2 <- comparaciones[[i]][2]
+
+    test <- wilcox.test(respuesta[grupo == g1], respuesta[grupo == g2],
+                        exact = FALSE, correct = FALSE)
+    w_vals[i] <- unname(test$statistic)
     p_vals[i] <- test$p.value
+    etiquetas[i] <- paste(g1, "-", g2)   # sin sort(): coincide con la dirección de W
   }
 
   p_ajustada <- p.adjust(p_vals, method = "bonferroni")
-  sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01, "**",
-                       ifelse(p_ajustada < 0.05, "*", "ns")))
+  sig <- .sig_stars(p_ajustada, alpha)
 
-  for (i in seq_along(comparaciones)) {
-    comp <- paste(sort(comparaciones[[i]]), collapse = " - ")
-    resultados[i, ] <- list(
-      Comparacion = comp,
-      W = round(w_vals[i], 4),
-      p_value = round(p_vals[i], 4),
-      p_ajustada = round(p_ajustada[i], 4),
-      Significancia = sig[i]
-    )
-  }
+  resultados <- data.frame(
+    Comparacion   = etiquetas,
+    W             = round(w_vals, 4),
+    p_value       = round(p_vals, 4),
+    p_ajustada    = round(p_ajustada, 4),
+    Significancia = sig,
+    stringsAsFactors = FALSE
+  )
 
   out <- list(
-    Resultados = resultados,
-    Promedios = Rj,
-    Orden_Medias = names(sort(Rj, decreasing = TRUE)),
-    Metodo = "Bonferroni (non-parametric)"
+    Resultados   = resultados,
+    Promedios    = Rj_ord,
+    Orden_Medias = niveles_ord,
+    Metodo       = "Bonferroni (non-parametric)",
+    Datos        = data.frame(y = respuesta, grupo = grupo)
   )
-  class(out) <- c("comparaciones", "bonferroni_np")
-  return(out)
+  out <- .agregar_info_pares(out, vapply(comparaciones, `[`, character(1), 1),
+                             vapply(comparaciones, `[`, character(1), 2),
+                             p_vals, p_ajustada)
+  class(out) <- c("bonferroni_np", "comparaciones_np", "comparaciones")
+  out
 }
 

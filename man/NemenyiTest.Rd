@@ -14,54 +14,53 @@ NemenyiTest(formula, data, alpha = 0.05)
 \item{alpha}{Significance level (default is 0.05).}
 }
 \value{
-An object of class \code{"nemenyi"} and \code{"comparaciones"}, including:
+An object of class \code{"nemenyi"}, \code{"comparaciones_np"} and \code{"comparaciones"}, including:
 \itemize{
-  \item \code{Resultados}: Data frame with group comparisons, rank differences, critical value, p-values, and significance codes.
-  \item \code{Promedios}: Mean ranks of each group.
-  \item \code{Orden_Medias}: Group names ordered from highest to lowest rank.
-  \item \code{Metodo}: Name of the method ("Nemenyi (no paramétrico)").
+  \item \code{Resultados}: Data frame with comparisons (higher - lower mean rank), mean-rank
+        difference, q statistic, critical difference, p-values and significance codes.
+  \item \code{Promedios}: Mean ranks of each group, sorted from highest to lowest.
+  \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
+  \item \code{Metodo}: Name of the method ("Nemenyi (non-parametric)").
+  \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+  \item \code{KruskalWallis}: Result of \code{kruskal.test()}.
 }
 }
 \description{
-Performs the Nemenyi test after a significant Kruskal-Wallis or Friedman test.
-Based on the studentized range distribution applied to mean ranks.
+Performs the Nemenyi (Nemenyi-Damico-Wolfe) all-pairs test after a significant
+Kruskal-Wallis test, using mean ranks computed on the pooled sample and the
+studentized range distribution.
 }
 \details{
+For each pair of groups the statistic is
+\deqn{q_{ij} = \frac{|\bar R_i - \bar R_j|}{\sqrt{\frac{N(N+1)}{12} \, C \, \frac{1}{2}\left(\frac{1}{n_i} + \frac{1}{n_j}\right)}}}
+where \eqn{C = 1 - \sum (t^3 - t)/(N^3 - N)} is the tie correction. The p-value is
+obtained from the studentized range distribution with \eqn{k} means and infinite
+degrees of freedom, so it already controls the family-wise error rate.
+With unequal group sizes the Tukey-Kramer extension is used.
+
 Advantages:
-- Easy to implement for equal-sized groups.
-- Conservative control of family-wise error rate.
+- Controls the family-wise error rate without an additional p-value adjustment.
+- Direct non-parametric analogue of Tukey's HSD.
 
 Disadvantages:
-- Only valid with equal group sizes.
-- No p-values are directly calculated (based on critical differences only).
-- It is only useful in completely random or single-factor designs.
+- Exact only for equal group sizes; with unequal sizes it is an approximation (Tukey-Kramer).
+- Usually less powerful than Conover-Iman.
+- It is only useful in completely random or single-factor designs
+  (for blocked designs use a Friedman-type procedure).
 }
 \examples{
 set.seed(123)
 datos <- data.frame(
- grupo = rep(c("A", "B", "C", "D"), each = 10),
- medida = c(
-   rnorm(10, mean = 10),
-   rnorm(10, mean = 12),
-   rnorm(10, mean = 15),
-   rnorm(10, mean = 11)
- )
+  grupo = rep(c("A", "B", "C", "D"), each = 10),
+  medida = c(rnorm(10, 10), rnorm(10, 12), rnorm(10, 15), rnorm(10, 11))
 )
-table(datos$grupo)
-#> A  B  C  D
-#>10 10 10 10
-# Aplicar el test de Nemenyi
 resultado <- NemenyiTest(medida ~ grupo, data = datos)
-# Ver los resultados
 summary(resultado)
-# O simplemente
-resultado$Resultados
-# Ver orden de medias (rangos)
-resultado$Orden_Medias
-
-
+plot(resultado)
 
 }
 \references{
-Nemenyi, P. (1963). Distribution-free Multiple Comparisons.
+Nemenyi, P. (1963). \emph{Distribution-free Multiple Comparisons}. PhD thesis, Princeton University.
+
+Hollander, M., Wolfe, D. A. & Chicken, E. (2014). \emph{Nonparametric Statistical Methods} (3rd ed.). Wiley.
 }

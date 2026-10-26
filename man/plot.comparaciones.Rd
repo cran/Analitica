@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_comparations.R
 \name{plot.comparaciones}
 \alias{plot.comparaciones}
-\title{Generic plot for multiple-comparison tests (with multcompView letters) v2.0.1}
+\title{Plot for parametric multiple-comparison tests (with multcompView letters)}
 \usage{
 \method{plot}{comparaciones}(
   x,
@@ -51,5 +51,10 @@
 A \code{ggplot} object.
 }
 \description{
-Generic plot for multiple-comparison tests (with multcompView letters) v2.0.1
+Bar chart of group means with compact letter display. Groups sharing a letter
+are not significantly different. For rank-based (non-parametric) procedures
+see \code{\link{plot.comparaciones_np}}.
+}
+\seealso{
+\code{\link{plot.comparaciones_np}}
 }

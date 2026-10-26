@@ -97,9 +97,7 @@ BMTest <- function(grupo1, grupo2, alpha = 0.05, alternative = c("two.sided", "l
   orden <- order(medias, decreasing = TRUE)
   etiquetas_ordenadas <- names(medias)[orden]
   diferencia <- medias[1] - medias[2]
-  sig <- ifelse(p_val < 0.001, "***",
-                ifelse(p_val < 0.01, "**",
-                       ifelse(p_val < 0.05, "*", "ns")))
+  sig <- .sig_stars(p_val, alpha)
 
   resultados <- data.frame(
     Comparacion = paste(nombres[1], nombres[2], sep = " - "),

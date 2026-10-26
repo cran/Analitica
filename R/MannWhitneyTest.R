@@ -66,7 +66,10 @@ MWTest <- function(grupo1, grupo2, alpha = 0.05,
   U1 <- R1 - m * (m + 1) / 2
   U <- U1
   mu_U <- m * n / 2
-  sigma_U <- sqrt(m * n * (m + n + 1) / 12)
+  # Varianza de U con correccion por empates
+  N_tot <- m + n
+  t_emp <- table(datos)
+  sigma_U <- sqrt(m * n / 12 * ((N_tot + 1) - sum(t_emp^3 - t_emp) / (N_tot * (N_tot - 1))))
 
   z0 <- switch(alternative,
                "two.sided" = {
@@ -91,9 +94,7 @@ MWTest <- function(grupo1, grupo2, alpha = 0.05,
   names(medias) <- nombres
   orden <- order(medias, decreasing = TRUE)
   etiquetas_ordenadas <- names(medias)[orden]
-  sig <- ifelse(p_val < 0.001, "***",
-                ifelse(p_val < 0.01, "**",
-                       ifelse(p_val < 0.05, "*", "ns")))
+  sig <- .sig_stars(p_val, alpha)
 
   resultados <- data.frame(
     Comparacion = paste(nombres[1], nombres[2], sep = " - "),

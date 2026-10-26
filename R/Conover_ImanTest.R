@@ -7,6 +7,12 @@
 #' The Conover-Iman test uses rank-based t-statistics, offering improved statistical
 #' power over Dunn's test while maintaining flexibility in sample size.
 #'
+#' Ranks are computed on the pooled sample (mid-ranks for ties). For each pair,
+#' \deqn{t_{ij} = \frac{|\bar R_i - \bar R_j|}{\sqrt{S^2 \, \frac{N - 1 - H}{N - k} \left(\frac{1}{n_i} + \frac{1}{n_j}\right)}}}
+#' with \eqn{S^2 = \frac{1}{N-1}\left(\sum R^2 - \frac{N(N+1)^2}{4}\right)} and \eqn{H} the
+#' (tie-corrected) Kruskal-Wallis statistic. The statistic is compared with a
+#' t distribution with \eqn{N - k} degrees of freedom.
+#'
 #' Advantages:
 #' - More powerful than Dunn’s test, especially with moderate group differences.
 #' - Robust to non-normal data and suitable for ordinal or skewed distributions.
@@ -23,12 +29,14 @@
 #' @param alpha Significance level for hypothesis testing (default is 0.05).
 #' @param method.p Method used to adjust p-values for multiple comparisons (default is \code{"holm"}).
 #'
-#' @return An object of class \code{"conover"} and \code{"comparaciones"}, containing:
+#' @return An object of class \code{"conover"}, \code{"comparaciones_np"} and \code{"comparaciones"}, containing:
 #' \itemize{
-#'   \item \code{Resultados}: A data frame with pairwise comparisons, t-statistics, raw and adjusted p-values, and significance markers.
-#'   \item \code{Promedios}: A named numeric vector with mean ranks for each group.
+#'   \item \code{Resultados}: A data frame with pairwise comparisons (higher - lower mean rank), t-statistics, raw and adjusted p-values, and significance markers.
+#'   \item \code{Promedios}: A named numeric vector with mean ranks for each group, sorted from highest to lowest.
 #'   \item \code{Orden_Medias}: A character vector with group names sorted from highest to lowest rank.
-#'   \item \code{Metodo}: A string describing the method used ("Conover (no parametrico)").
+#'   \item \code{Metodo}: A string describing the method used ("Conover-Iman (non-parametric)").
+#'   \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+#'   \item \code{KruskalWallis}: Result of \code{kruskal.test()}.
 #' }
 #'
 #' @references Conover, W. J. & Iman, R. L. (1979). "Multiple comparisons using rank sums." \emph{Technometrics}, 21(4), 489–495.
@@ -39,71 +47,60 @@
 #'
 #'
 #' @export
-#' @importFrom stats pt p.adjust
+#' @importFrom stats pt p.adjust kruskal.test model.frame
 #' @importFrom utils combn
 
 ConoverTest <- function(formula, data, alpha = 0.05, method.p = "holm") {
   mf <- model.frame(formula, data)
   respuesta <- mf[[1]]
-  grupo <- as.factor(mf[[2]])
+  grupo <- droplevels(as.factor(mf[[2]]))
 
-  niveles <- levels(grupo)
-  k <- length(niveles)
+  k <- nlevels(grupo)
+  if (k < 2) stop("At least 2 groups are required.")
   N <- length(respuesta)
-  ranks <- rank(respuesta)
+  if (N - k < 1) stop("Not enough observations (N - k must be at least 1).")
   n <- table(grupo)
+
+  ranks <- rank(respuesta)
   Rj <- tapply(ranks, grupo, mean)
 
-  comparaciones <- combn(niveles, 2, simplify = FALSE)
+  # Varianza de los rangos (incluye empates) y estadistico H de Kruskal-Wallis
+  S2 <- (sum(ranks^2) - N * (N + 1)^2 / 4) / (N - 1)
+  H  <- (sum(as.numeric(n) * Rj^2) - N * (N + 1)^2 / 4) / S2
+  gl <- N - k
+
+  pares <- .pares_ordenados(Rj)
+  g1 <- vapply(pares, `[`, character(1), 1)
+  g2 <- vapply(pares, `[`, character(1), 2)
+
+  dif <- as.numeric(Rj[g1] - Rj[g2])
+  se  <- sqrt(S2 * (N - 1 - H) / gl * (1 / as.numeric(n[g1]) + 1 / as.numeric(n[g2])))
+  t_vals <- dif / se
+  p_vals <- 2 * stats::pt(-abs(t_vals), gl)
+  p_ajustada <- stats::p.adjust(p_vals, method = method.p)
+
   resultados <- data.frame(
-    Comparacion = character(),
-    t_value = numeric(),
-    p_value = numeric(),
-    p_ajustada = numeric(),
-    Significancia = character(),
+    Comparacion   = paste(g1, "-", g2),
+    Diferencia    = round(dif, 4),
+    t_value       = round(t_vals, 4),
+    p_value       = round(p_vals, 4),
+    p_ajustada    = round(p_ajustada, 4),
+    Significancia = .sig_stars(p_ajustada, alpha),
     stringsAsFactors = FALSE
   )
 
-  S2 <- (N * (N + 1)) / 12
-
-  t_vals <- numeric(length(comparaciones))
-  p_vals <- numeric(length(comparaciones))
-
-  for (i in seq_along(comparaciones)) {
-    par <- comparaciones[[i]]
-    g1 <- par[1]; g2 <- par[2]
-    dif <- abs(Rj[g1] - Rj[g2])
-    se <- sqrt(S2 * (1 / n[g1] + 1 / n[g2]))
-    t <- dif / se
-    df <- N - k  # Conservative approximation
-    p <- 2 * pt(-abs(t), df)
-
-    t_vals[i] <- t
-    p_vals[i] <- p
-  }
-
-  p_ajustada <- p.adjust(p_vals, method = method.p)
-  sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01, "**",
-                       ifelse(p_ajustada < 0.05, "*", "ns")))
-
-  for (i in seq_along(comparaciones)) {
-    comp <- paste(sort(comparaciones[[i]]), collapse = " - ")
-    resultados[i, ] <- list(
-      Comparacion = comp,
-      t_value = round(t_vals[i], 4),
-      p_value = round(p_vals[i], 4),
-      p_ajustada = round(p_ajustada[i], 4),
-      Significancia = sig[i]
-    )
-  }
-
+  orden <- names(sort(Rj, decreasing = TRUE))
   out <- list(
-    Resultados = resultados,
-    Promedios = Rj,
-    Orden_Medias = names(sort(Rj, decreasing = TRUE)),
-    Metodo = "Conover (no parametrico)"
+    Resultados    = resultados,
+    Promedios     = Rj[orden],
+    Orden_Medias  = orden,
+    Metodo        = "Conover-Iman (non-parametric)",
+    Ajuste        = method.p,
+    gl            = gl,
+    Datos         = data.frame(y = respuesta, grupo = grupo),
+    KruskalWallis = stats::kruskal.test(respuesta, grupo)
   )
-  class(out) <- c("comparaciones", "conover")
-  return(out)
+  out <- .agregar_info_pares(out, g1, g2, p_vals, p_ajustada)
+  class(out) <- c("conover", "comparaciones_np", "comparaciones")
+  out
 }

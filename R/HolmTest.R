@@ -98,7 +98,7 @@ HolmTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   MSerror  <- deviance(modelo) / df_error
 
   # Comparaciones pareadas
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
   m <- length(pares)
 
   # Prealocar
@@ -108,6 +108,8 @@ HolmTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   t_value     <- numeric(m)
   p_value     <- numeric(m)
 
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
+
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
     dif <- abs(medias[g1] - medias[g2])
@@ -115,7 +117,9 @@ HolmTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     t   <- dif / se
     p   <- 2 * stats::pt(-abs(t), df_error)
 
-    Comparacion[i] <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i] <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p))
     Diferencia[i]  <- dif
     SE[i]          <- se
     t_value[i]     <- t
@@ -123,9 +127,7 @@ HolmTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   }
 
   p_ajustada <- p.adjust(p_value, method = "holm")
-  Sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01,  "**",
-                       ifelse(p_ajustada < 0.05,   "*", "ns")))
+  Sig <- .sig_stars(p_ajustada, alpha)
 
   resultados <- data.frame(
     Comparacion = Comparacion,
@@ -148,6 +150,7 @@ HolmTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "holm")
+  out <- .agregar_info_pares(out, .g1, .g2, .p, p_ajustada)
+  class(out) <- c("holm", "comparaciones")
   return(out)
 }

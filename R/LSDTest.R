@@ -96,7 +96,7 @@ LSDTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   MSerror  <- deviance(modelo) / df_error
 
   # Comparaciones pareadas
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
   m <- length(pares)
 
   # t critico (dos colas) para el valor LSD
@@ -110,6 +110,8 @@ LSDTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   p_value     <- numeric(m)
   Valor_LSD   <- numeric(m)
 
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
+
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
 
@@ -119,7 +121,9 @@ LSDTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     p   <- 2 * stats::pt(-abs(t), df_error)
     lsd <- t_crit * se
 
-    Comparacion[i] <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i] <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p))
     Diferencia[i]  <- dif
     SE[i]          <- se
     t_value[i]     <- t
@@ -127,9 +131,7 @@ LSDTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     Valor_LSD[i]   <- lsd
   }
 
-  Sig <- ifelse(p_value < 0.001, "***",
-                ifelse(p_value < 0.01,  "**",
-                       ifelse(p_value < 0.05,   "*", "ns")))
+  Sig <- .sig_stars(p_value, alpha)
 
   resultados <- data.frame(
     Comparacion = Comparacion,
@@ -152,6 +154,7 @@ LSDTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "lsd")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("lsd", "comparaciones")
   return(out)
 }

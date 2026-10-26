@@ -105,7 +105,7 @@ SidakTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   MSerror  <- deviance(modelo) / df_error
 
   # Combinaciones pareadas
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
   m <- length(pares)  # número de comparaciones
 
   # Umbral de Sidak para dos colas: alpha* = 1 - (1 - alpha)^(1/m)
@@ -120,6 +120,8 @@ SidakTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   p_value       <- numeric(m)
   Valor_Critico <- numeric(m)
 
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
+
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
 
@@ -129,7 +131,9 @@ SidakTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     p   <- 2 * stats::pt(-abs(t), df_error)
     cd  <- t_crit * se  # diferencia critica con umbral Sidak
 
-    Comparacion[i]   <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i]   <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p))
     Diferencia[i]    <- dif
     SE[i]            <- se
     t_value[i]       <- t
@@ -138,11 +142,9 @@ SidakTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   }
 
   # Ajuste de p por Sidak: p_adj = 1 - (1 - p)^m
-  p_ajustada <- 1 - (1 - p_value)^m
+  p_ajustada <- -expm1(m * log1p(-p_value))   # = 1 - (1 - p)^m, estable para p pequenos
 
-  Sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01,  "**",
-                       ifelse(p_ajustada < 0.05,   "*", "ns")))
+  Sig <- .sig_stars(p_ajustada, alpha)
 
   resultados <- data.frame(
     Comparacion   = Comparacion,
@@ -166,6 +168,7 @@ SidakTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "sidak")
+  out <- .agregar_info_pares(out, .g1, .g2, .p, p_ajustada)
+  class(out) <- c("sidak", "comparaciones")
   return(out)
 }

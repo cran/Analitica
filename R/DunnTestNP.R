@@ -4,6 +4,9 @@
 #' Suitable for non-parametric data (ordinal or non-normal), using rank sums.
 #' Includes Holm correction by default for multiple comparisons.
 #'
+#' For each pair, \eqn{z_{ij} = |\bar R_i - \bar R_j| / \sqrt{\frac{N(N+1)}{12} C \left(\frac{1}{n_i} + \frac{1}{n_j}\right)}},
+#' where \eqn{C = 1 - \sum (t^3 - t)/(N^3 - N)} corrects for ties.
+#'
 #' Advantages:
 #' - Simple and widely used non-parametric alternative to Tukey's test.
 #' - Handles unequal sample sizes.
@@ -18,12 +21,14 @@
 #' @param alpha Significance level (default is 0.05).
 #' @param method.p Method for p-value adjustment (default is "holm").
 #'
-#' @return An object of class \code{"dunn"} and \code{"comparaciones"}, including:
+#' @return An object of class \code{"dunn"}, \code{"comparaciones_np"} and \code{"comparaciones"}, including:
 #' \itemize{
-#'   \item \code{Resultados}: Data frame with group comparisons, z-values, raw and adjusted p-values, and significance.
-#'   \item \code{Promedios}: Mean ranks of each group.
+#'   \item \code{Resultados}: Data frame with group comparisons (higher - lower mean rank), z-values, raw and adjusted p-values, and significance.
+#'   \item \code{Promedios}: Mean ranks of each group, sorted from highest to lowest.
 #'   \item \code{Orden_Medias}: Group names ordered from highest to lowest rank.
-#'   \item \code{Metodo}: "Dunn (no paramétrico)".
+#'   \item \code{Metodo}: "Dunn (non-parametric)".
+#'   \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+#'   \item \code{KruskalWallis}: Result of \code{kruskal.test()}.
 #' }
 #'
 #' @references
@@ -35,76 +40,54 @@
 #'
 #'
 #' @export
-#' @importFrom stats p.adjust pnorm kruskal.test
+#' @importFrom stats p.adjust pnorm kruskal.test model.frame
 #' @importFrom utils combn
 
 DunnTest <- function(formula, data, alpha = 0.05, method.p = "holm") {
   mf <- model.frame(formula, data)
   response <- mf[[1]]
-  grupo <- as.factor(mf[[2]])
+  grupo <- droplevels(as.factor(mf[[2]]))
 
-  # Kruskal-Wallis check (opcional, pero puede ayudarte a verificar)
-  kruskal <- kruskal.test(formula, data = data)
-
-  # Ranks y estructura
-  ranks <- rank(response)
-  niveles <- levels(grupo)
-  k <- length(niveles)
-  n <- table(grupo)
+  k <- nlevels(grupo)
+  if (k < 2) stop("At least 2 groups are required.")
   N <- length(response)
-  Rj <- tapply(ranks, grupo, mean)
-  S2 <- (N * (N + 1)) / 12
+  n <- table(grupo)
 
-  comparaciones <- combn(niveles, 2, simplify = FALSE)
+  ranks <- rank(response)
+  Rj <- tapply(ranks, grupo, mean)
+  S2 <- N * (N + 1) / 12 * .factor_empates(response)
+
+  pares <- .pares_ordenados(Rj)
+  g1 <- vapply(pares, `[`, character(1), 1)
+  g2 <- vapply(pares, `[`, character(1), 2)
+
+  dif <- as.numeric(Rj[g1] - Rj[g2])
+  se  <- sqrt(S2 * (1 / as.numeric(n[g1]) + 1 / as.numeric(n[g2])))
+  z_vals <- dif / se
+  p_vals <- 2 * stats::pnorm(-abs(z_vals))
+  p_ajustada <- stats::p.adjust(p_vals, method = method.p)
+
   resultados <- data.frame(
-    Comparacion = character(),
-    z = numeric(),
-    p_value = numeric(),
-    p_ajustada = numeric(),
-    Significancia = character(),
+    Comparacion   = paste(g1, "-", g2),
+    Diferencia    = round(dif, 4),
+    z             = round(z_vals, 4),
+    p_value       = round(p_vals, 4),
+    p_ajustada    = round(p_ajustada, 4),
+    Significancia = .sig_stars(p_ajustada, alpha),
     stringsAsFactors = FALSE
   )
 
-  z_vals <- numeric(length(comparaciones))
-  p_vals <- numeric(length(comparaciones))
-
-  for (i in seq_along(comparaciones)) {
-    par <- comparaciones[[i]]
-    g1 <- par[1]; g2 <- par[2]
-
-    dif <- abs(Rj[g1] - Rj[g2])
-    se <- sqrt(S2 * (1 / n[g1] + 1 / n[g2]))
-    z <- dif / se
-    p <- 2 * (1 - pnorm(abs(z)))
-
-    z_vals[i] <- z
-    p_vals[i] <- p
-  }
-
-  p_ajustada <- p.adjust(p_vals, method = method.p)
-  sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01, "**",
-                       ifelse(p_ajustada < 0.05, "*", "ns")))
-
-  for (i in seq_along(comparaciones)) {
-    comp <- paste(sort(comparaciones[[i]]), collapse = " - ")
-    resultados[i, ] <- list(
-      Comparacion = comp,
-      z = round(z_vals[i], 4),
-      p_value = round(p_vals[i], 4),
-      p_ajustada = round(p_ajustada[i], 4),
-      Significancia = sig[i]
-    )
-  }
-
-  ordenado <- names(sort(Rj, decreasing = TRUE))
-
+  orden <- names(sort(Rj, decreasing = TRUE))
   out <- list(
-    Resultados = resultados,
-    Promedios = Rj,
-    Orden_Medias = ordenado,
-    Metodo = "Dunn (no parametrico)"
+    Resultados    = resultados,
+    Promedios     = Rj[orden],
+    Orden_Medias  = orden,
+    Metodo        = "Dunn (non-parametric)",
+    Ajuste        = method.p,
+    Datos         = data.frame(y = response, grupo = grupo),
+    KruskalWallis = stats::kruskal.test(response, grupo)
   )
-  class(out) <- c("comparaciones", "dunn")
-  return(out)
+  out <- .agregar_info_pares(out, g1, g2, p_vals, p_ajustada)
+  class(out) <- c("dunn", "comparaciones_np", "comparaciones")
+  out
 }

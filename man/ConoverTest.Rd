@@ -17,12 +17,14 @@ and \code{group} is a factor indicating group membership.}
 \item{method.p}{Method used to adjust p-values for multiple comparisons (default is \code{"holm"}).}
 }
 \value{
-An object of class \code{"conover"} and \code{"comparaciones"}, containing:
+An object of class \code{"conover"}, \code{"comparaciones_np"} and \code{"comparaciones"}, containing:
 \itemize{
-  \item \code{Resultados}: A data frame with pairwise comparisons, t-statistics, raw and adjusted p-values, and significance markers.
-  \item \code{Promedios}: A named numeric vector with mean ranks for each group.
+  \item \code{Resultados}: A data frame with pairwise comparisons (higher - lower mean rank), t-statistics, raw and adjusted p-values, and significance markers.
+  \item \code{Promedios}: A named numeric vector with mean ranks for each group, sorted from highest to lowest.
   \item \code{Orden_Medias}: A character vector with group names sorted from highest to lowest rank.
-  \item \code{Metodo}: A string describing the method used ("Conover (no parametrico)").
+  \item \code{Metodo}: A string describing the method used ("Conover-Iman (non-parametric)").
+  \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+  \item \code{KruskalWallis}: Result of \code{kruskal.test()}.
 }
 }
 \description{
@@ -33,6 +35,12 @@ following a significant Kruskal-Wallis test to identify specific group differenc
 \details{
 The Conover-Iman test uses rank-based t-statistics, offering improved statistical
 power over Dunn's test while maintaining flexibility in sample size.
+
+Ranks are computed on the pooled sample (mid-ranks for ties). For each pair,
+\deqn{t_{ij} = \frac{|\bar R_i - \bar R_j|}{\sqrt{S^2 \, \frac{N - 1 - H}{N - k} \left(\frac{1}{n_i} + \frac{1}{n_j}\right)}}}
+with \eqn{S^2 = \frac{1}{N-1}\left(\sum R^2 - \frac{N(N+1)^2}{4}\right)} and \eqn{H} the
+(tie-corrected) Kruskal-Wallis statistic. The statistic is compared with a
+t distribution with \eqn{N - k} degrees of freedom.
 
 Advantages:
 - More powerful than Dunn’s test, especially with moderate group differences.

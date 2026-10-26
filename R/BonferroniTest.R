@@ -103,7 +103,7 @@ BonferroniTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   MSerror  <- deviance(modelo) / df_error
 
   # Todas las comparaciones
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
   m <- length(pares)  # número de comparaciones
 
   # Umbral por comparacion Bonferroni (dos colas)
@@ -118,6 +118,8 @@ BonferroniTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   p_value       <- numeric(m)
   Valor_Critico <- numeric(m)
 
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
+
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
     dif <- abs(medias[g1] - medias[g2])
@@ -126,7 +128,9 @@ BonferroniTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     p   <- 2 * stats::pt(-abs(t), df_error)
     cd  <- t_crit * se  # diferencia critica con α/m
 
-    Comparacion[i]   <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i]   <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p))
     Diferencia[i]    <- dif
     SE[i]            <- se
     t_value[i]       <- t
@@ -137,9 +141,7 @@ BonferroniTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   # Ajuste Bonferroni por cota: p_adj = min(1, m * p)
   p_ajustada <- pmin(1, m * p_value)
 
-  Sig <- ifelse(p_ajustada < 0.001, "***",
-                ifelse(p_ajustada < 0.01,  "**",
-                       ifelse(p_ajustada < 0.05,   "*", "ns")))
+  Sig <- .sig_stars(p_ajustada, alpha)
 
   resultados <- data.frame(
     Comparacion   = Comparacion,
@@ -163,7 +165,8 @@ BonferroniTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "bonferroni")
+  out <- .agregar_info_pares(out, .g1, .g2, .p, p_ajustada)
+  class(out) <- c("bonferroni", "comparaciones")
   return(out)
 }
 

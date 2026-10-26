@@ -104,7 +104,7 @@ ScheffeTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   Fcrit    <- stats::qf(1 - alpha, df1, df_error)
 
   # Todas las comparaciones
-  pares <- utils::combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
 
   # Prealocar
   m <- length(pares)
@@ -115,6 +115,8 @@ ScheffeTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   Valor_Critico <- numeric(m)  # umbral de diferencia |yi-yj|
   p_value       <- numeric(m)
   Significancia <- character(m)
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
@@ -128,11 +130,11 @@ ScheffeTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     # Diferencia critica (umbral en escala de medias)
     diff_crit <- sqrt((g - 1) * Fcrit * se2)
 
-    sig <- ifelse(pval < 0.001, "***",
-                  ifelse(pval < 0.01,  "**",
-                         ifelse(pval < 0.05,   "*", "ns")))
+    sig <- .sig_stars(pval, alpha)
 
-    Comparacion[i]   <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i]   <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(pval))
     Diferencia[i]    <- round(dif, 4)
     SE2[i]           <- round(se2, 6)
     F_obs[i]         <- round(Fobs, 4)
@@ -162,6 +164,7 @@ ScheffeTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "scheffe")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("scheffe", "comparaciones")
   return(out)
 }

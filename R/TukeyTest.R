@@ -129,7 +129,7 @@ TukeyTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   if (ng < 2) stop("At least 2 levels/groups are needed in the term to be compared.")
 
   # Todas las comparaciones pareadas
-  comparaciones <- combn(nombres_grupos, 2, simplify = FALSE)
+  comparaciones <- .pares_ordenados(medias)
 
   resultados <- data.frame(
     Comparacion   = character(),
@@ -142,6 +142,8 @@ TukeyTest <- function(modelo, comparar = NULL, alpha = 0.05) {
 
   # Valor critico de Tukey (q)
   q_crit <- qtukey(1 - alpha, ng, df_error)
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (par in comparaciones) {
     g1 <- par[1]; g2 <- par[2]
@@ -157,11 +159,11 @@ TukeyTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     q_obs <- dif / (sqrt(MSerror/2) * sqrt(1/n[g1] + 1/n[g2]))
     p_val <- 1 - ptukey(q_obs, ng, df_error)
 
-    sig <- ifelse(p_val < 0.001, "***",
-                  ifelse(p_val < 0.01,  "**",
-                         ifelse(p_val < 0.05,   "*", "ns")))
+    sig <- .sig_stars(p_val, alpha)
 
-    comparacion <- paste(sort(c(g1, g2)), collapse = " - ")
+    comparacion <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p_val))
 
     resultados <- rbind(resultados, data.frame(
       Comparacion   = comparacion,
@@ -180,6 +182,7 @@ TukeyTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     Metodo       = "Tukey",
     Termino      = term_label
   )
-  class(out) <- c("comparaciones", "tukey")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("tukey", "comparaciones")
   return(out)
 }

@@ -16,12 +16,14 @@ DunnTest(formula, data, alpha = 0.05, method.p = "holm")
 \item{method.p}{Method for p-value adjustment (default is "holm").}
 }
 \value{
-An object of class \code{"dunn"} and \code{"comparaciones"}, including:
+An object of class \code{"dunn"}, \code{"comparaciones_np"} and \code{"comparaciones"}, including:
 \itemize{
-  \item \code{Resultados}: Data frame with group comparisons, z-values, raw and adjusted p-values, and significance.
-  \item \code{Promedios}: Mean ranks of each group.
+  \item \code{Resultados}: Data frame with group comparisons (higher - lower mean rank), z-values, raw and adjusted p-values, and significance.
+  \item \code{Promedios}: Mean ranks of each group, sorted from highest to lowest.
   \item \code{Orden_Medias}: Group names ordered from highest to lowest rank.
-  \item \code{Metodo}: "Dunn (no paramétrico)".
+  \item \code{Metodo}: "Dunn (non-parametric)".
+  \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+  \item \code{KruskalWallis}: Result of \code{kruskal.test()}.
 }
 }
 \description{
@@ -30,6 +32,9 @@ Suitable for non-parametric data (ordinal or non-normal), using rank sums.
 Includes Holm correction by default for multiple comparisons.
 }
 \details{
+For each pair, \eqn{z_{ij} = |\bar R_i - \bar R_j| / \sqrt{\frac{N(N+1)}{12} C \left(\frac{1}{n_i} + \frac{1}{n_j}\right)}},
+where \eqn{C = 1 - \sum (t^3 - t)/(N^3 - N)} corrects for ties.
+
 Advantages:
 - Simple and widely used non-parametric alternative to Tukey's test.
 - Handles unequal sample sizes.

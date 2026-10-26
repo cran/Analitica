@@ -108,7 +108,7 @@ SNKTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   SE_ij <- function(g1, g2) sqrt(MSerror * (1 / n[g1] + 1 / n[g2]))
 
   # Todas las comparaciones
-  pares <- combn(nombres_grupos, 2, simplify = FALSE)
+  pares <- .pares_ordenados(medias)
 
   # Orden de medias ascendente para calcular r (número de medias abarcadas)
   ordenado_asc <- names(sort(medias, decreasing = FALSE))
@@ -121,6 +121,8 @@ SNKTest <- function(modelo, comparar = NULL, alpha = 0.05) {
   Valor_Critico <- numeric(m)
   p_value       <- numeric(m)
   Significancia <- character(m)
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (i in seq_along(pares)) {
     g1 <- pares[[i]][1]
@@ -141,11 +143,11 @@ SNKTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     q_obs <- dif * sqrt(2) / se_val
     p_val <- 1 - stats::ptukey(q_obs, r, df_error)
 
-    sig <- ifelse(p_val < 0.001, "***",
-                  ifelse(p_val < 0.01,  "**",
-                         ifelse(p_val < 0.05,   "*", "ns")))
+    sig <- .sig_stars(p_val, alpha)
 
-    Comparacion[i]   <- paste(sort(c(g1, g2)), collapse = " - ")
+    Comparacion[i]   <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p_val))
     Diferencia[i]    <- round(dif, 4)
     SE[i]            <- round(se_val, 4)
     Valor_Critico[i] <- round(valor_crit, 4)
@@ -173,6 +175,7 @@ SNKTest <- function(modelo, comparar = NULL, alpha = 0.05) {
     df_error     = df_error,
     N            = n
   )
-  class(out) <- c("comparaciones", "snk")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("snk", "comparaciones")
   return(out)
 }

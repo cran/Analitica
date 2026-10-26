@@ -14,12 +14,14 @@ BonferroniNPTest(formula, data, alpha = 0.05)
 \item{alpha}{Significance level (default is 0.05).}
 }
 \value{
-An object of class \code{"bonferroni_np"} and \code{"comparaciones"}, containing:
+An object of class \code{"bonferroni_np"}, \code{"comparaciones_np"} and \code{"comparaciones"}, containing:
 \itemize{
-  \item \code{Resultados}: Data frame with comparisons, W-statistics, raw and adjusted p-values, and significance levels.
-  \item \code{Promedios}: Mean ranks of each group.
-  \item \code{Orden_Medias}: Group names ordered from highest to lowest rank.
+  \item \code{Resultados}: Data frame with comparisons (ordered from highest to lowest
+        mean rank), W-statistics, raw and adjusted p-values, and significance levels.
+  \item \code{Promedios}: Mean ranks of each group, sorted from highest to lowest.
+  \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
   \item \code{Metodo}: Name of the method used ("Bonferroni (non-parametric)").
+  \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
 }
 }
 \description{
@@ -28,6 +30,9 @@ with Bonferroni correction for multiple testing.
 }
 \details{
 Suitable for non-parametric data where ANOVA assumptions are violated.
+Groups are ordered from highest to lowest mean rank, and each comparison is
+reported as "higher - lower", so the W statistic always refers to the first
+group of the pair.
 
 Advantages:
 - Simple and intuitive non-parametric alternative to ANOVA post hoc tests.

@@ -1,4 +1,8 @@
-#' Generic plot for multiple-comparison tests (with multcompView letters) v2.0.1
+#' Plot for parametric multiple-comparison tests (with multcompView letters)
+#'
+#' Bar chart of group means with compact letter display. Groups sharing a letter
+#' are not significantly different. For rank-based (non-parametric) procedures
+#' see \code{\link{plot.comparaciones_np}}.
 #'
 #' @param x An object of class \code{comparaciones}.
 #' @param alpha Significance threshold for the letters (default 0.05).
@@ -19,6 +23,7 @@
 #' @importFrom multcompView multcompLetters
 #' @importFrom rlang .data
 #' @importFrom stats setNames
+#' @seealso \code{\link{plot.comparaciones_np}}
 plot.comparaciones <- function(
     x, alpha = 0.05,
     p_column = c("auto","p_ajustada","p_value","p"),
@@ -35,46 +40,22 @@ plot.comparaciones <- function(
 ) {
   if (!inherits(x, "comparaciones")) stop("Object must be of class 'comparaciones'.")
 
-  resultados <- x$Resultados
   promedios  <- x$Promedios
   orden      <- x$Orden_Medias
   metodo     <- if (!is.null(x$Metodo)) x$Metodo else "Comparaciones"
   termino    <- if (!is.null(x$Termino)) paste0(" - ", x$Termino) else ""
 
-  pick_col <- function(df, choices) { nm <- intersect(choices, names(df)); if (length(nm)) nm[1] else NA_character_ }
-  col_comp <- pick_col(resultados, c("Comparacion","Comparation","Comparison"))
-  if (is.na(col_comp)) stop("No comparison column found (e.g., 'Comparacion').")
+  # Letras de grupos homogeneos (calculadas con p-valores sin redondear si existen)
+  letras <- .letras_cld(x, alpha = alpha, p_column = match.arg(p_column))
 
-  p_column <- match.arg(p_column)
-  if (p_column == "auto") {
-    col_p <- pick_col(resultados, c("p_ajustada","padj","p.adjust","p.adjusted","p_value","p","P.value"))
-  } else {
-    col_p <- p_column
-    if (!col_p %in% names(resultados)) stop(sprintf("Column '%s' does not exist in 'Resultados'.", col_p))
-  }
-  if (is.na(col_p)) stop("No p-value column found ('p_ajustada', 'p_value', 'p', 'P.value').")
-
-  pares <- resultados[[col_comp]]
-  pvals <- resultados[[col_p]]
-  if (anyNA(pares) || anyNA(pvals)) stop("There are NA values in comparisons or p-values.")
-  names(pvals) <- gsub(" - ", "-", pares, fixed = TRUE)
-
-  # Letras base de multcompView
-  letras <- multcompView::multcompLetters(pvals, threshold = alpha)$Letters
-
-  # Tabla de medias
   df_medias <- data.frame(
     Grupo = names(promedios),
     Media = as.numeric(promedios),
-    Letra = letras[names(promedios)],
+    Letra = unname(letras[names(promedios)]),
     stringsAsFactors = FALSE
   )
-
-  # Letras faltantes -> placeholder
   if (anyNA(df_medias$Letra)) {
-    faltan <- which(is.na(df_medias$Letra))
-    df_medias$Letra[faltan] <- LETTERS[seq_along(faltan)]
-    warning("Some groups did not receive letters from 'multcompLetters'; assigned stand-in letters.")
+    stop("Some groups did not receive letters; check that 'Resultados' contains all pairs.")
   }
 
   # Orden de barras
@@ -84,30 +65,6 @@ plot.comparaciones <- function(
     df_medias <- df_medias[order(df_medias$Media, decreasing = TRUE), ]
   }
   df_medias$Grupo <- factor(df_medias$Grupo, levels = df_medias$Grupo)
-
-  # === Reordenar letras de acuerdo al orden de las medias ===
-  # Idea: recorrer las etiquetas en el orden actual de df_medias,
-  # registrar la PRIMERA aparición de cada símbolo de letra,
-  # y remapear a a,b,c,... en ese mismo orden (respetando combinaciones como "ab").
-  make_targets <- function(n) {
-    if (n <= length(letters)) letters[seq_len(n)] else c(letters, paste0("a", seq_len(n - length(letters))))
-  }
-  # Símbolos únicos en orden de aparición por df_medias$Letra (uniendo por grupo en orden actual)
-  symbols_in_order <- character(0)
-  for (lab in df_medias$Letra) {
-    chars <- unique(strsplit(lab, "", fixed = TRUE)[[1]])
-    for (ch in chars) if (!ch %in% symbols_in_order) symbols_in_order <- c(symbols_in_order, ch)
-  }
-  if (length(symbols_in_order)) {
-    target <- make_targets(length(symbols_in_order))
-    remap  <- setNames(target, symbols_in_order)
-    remap_label <- function(s) {
-      chars <- unique(strsplit(s, "", fixed = TRUE)[[1]])
-      paste0(remap[chars], collapse = "")
-    }
-    df_medias$Letra <- vapply(df_medias$Letra, remap_label, character(1))
-  }
-  # === fin reordenamiento de letras ===
 
   # Colocación de letras
   rng  <- range(df_medias$Media, na.rm = TRUE)

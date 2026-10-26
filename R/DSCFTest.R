@@ -1,121 +1,117 @@
-#' Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric) v2.0.3
+#' Dwass-Steel-Critchlow-Fligner (DSCF) Test (Non-Parametric)
 #'
-#' Robust non-parametric method for multiple comparisons after Kruskal-Wallis.
-#' Uses rank-based pairwise tests with a pooled variance estimate.
+#' All-pairs non-parametric multiple comparison procedure, usually applied after
+#' a Kruskal-Wallis test. Unlike Dunn or Conover-Iman, each pair of groups is
+#' ranked separately (only the observations of those two groups), and the
+#' standardized Wilcoxon statistic is referred to the studentized range
+#' distribution with \eqn{k} groups and infinite degrees of freedom.
+#'
+#' For groups \eqn{i} and \eqn{j}, with \eqn{W_i} the sum of the ranks of group
+#' \eqn{i} in the joint ranking of both groups,
+#' \deqn{W^*_{ij} = \sqrt{2}\,\frac{W_i - n_i(n_i + n_j + 1)/2}{\sqrt{V_{ij}}}}
+#' \deqn{V_{ij} = \frac{n_i n_j}{12}\left(n_i + n_j + 1 - \frac{\sum (t^3 - t)}{(n_i + n_j)(n_i + n_j - 1)}\right)}
+#' where \eqn{t} are the sizes of the tie groups within the pair. The p-value is
+#' \eqn{P(Q_{k,\infty} \ge |W^*_{ij}|)}, which already controls the family-wise error rate.
 #'
 #' Advantages:
-#' - Strong control of Type I error with unequal sample sizes.
-#' - More powerful than Dunn in many conditions.
+#' - Strong control of the family-wise error rate with unequal sample sizes.
+#' - Each comparison only uses the data of the two groups involved.
 #'
 #' Disadvantages:
 #' - Computationally more complex.
 #' - Less commonly available in standard software.
 #' - It is only useful in completely random or single-factor designs.
 #'
-#' @references Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), Contribution1s to Probability and Statistics: Essays in Honor of Harold Hotelling (pp. 198 - 202). Stanford University Press.
+#' @references
+#' Dwass, M. (1960). Some k-sample rank-order tests. In I. Olkin et al. (Eds.), \emph{Contributions to Probability and Statistics: Essays in Honor of Harold Hotelling} (pp. 198-202). Stanford University Press.
 #'
-#'@examples
-#'data(d_e, package = "Analitica")
-#'DSCFTest(Sueldo_actual ~ labor, data = d_e)
+#' Steel, R. G. D. (1960). A rank sum test for comparing all pairs of treatments. \emph{Technometrics}, 2(2), 197-207. \doi{10.1080/00401706.1960.10489894}
 #'
-#' @param formula  y ~ group
-#' @param data     data.frame con las variables
-#' @param alpha    nivel (0.05 por defecto)  just for the little star
-#' @param method.p adjustment method (default "holm")
-#' @param na.rm    remove NA (TRUE by default)
-#' @param include_kw if TRUE, add summary of Kruskal-Wallis test
+#' Critchlow, D. E. & Fligner, M. A. (1991). On distribution-free multiple comparisons in the one-way analysis of variance. \emph{Communications in Statistics - Theory and Methods}, 20(1), 127-139. \doi{10.1080/03610929108830487}
 #'
-#' @return objeto con clases c("comparaciones","dscf")
+#' @examples
+#' data(d_e, package = "Analitica")
+#' DSCFTest(Sueldo_actual ~ labor, data = d_e)
+#'
+#' @param formula  A formula of the form \code{y ~ group}.
+#' @param data     A data frame containing the variables.
+#' @param alpha    Significance level (default 0.05).
+#' @param method.p Ignored. Kept for backward compatibility: the studentized range
+#'   distribution already controls the family-wise error rate.
+#' @param na.rm    Remove NA (TRUE by default).
+#' @param include_kw If TRUE, add the Kruskal-Wallis test to the output.
+#'
+#' @return An object of class \code{"dscf"}, \code{"comparaciones_np"} and \code{"comparaciones"}, containing:
+#' \itemize{
+#'   \item \code{Resultados}: Data frame with comparisons (higher - lower mean rank), W statistic,
+#'         p-values and significance codes.
+#'   \item \code{Promedios}: Mean ranks of each group (pooled ranking), sorted from highest to lowest.
+#'   \item \code{Orden_Medias}: Group names ordered from highest to lowest mean rank.
+#'   \item \code{N_por_grupo}: Sample size of each group.
+#'   \item \code{Metodo}: "DSCF (non-parametric)".
+#'   \item \code{Datos}: Data frame with the response and the group, used by \code{plot()}.
+#'   \item \code{KruskalWallis}: Result of \code{kruskal.test()} (if \code{include_kw = TRUE}).
+#' }
 #'
 #' @export
-#' @importFrom stats pnorm p.adjust kruskal.test model.frame
+#' @importFrom stats ptukey kruskal.test model.frame
 #' @importFrom utils combn
-DSCFTest <- function(formula, data, alpha = 0.05, method.p = "holm",
+DSCFTest <- function(formula, data, alpha = 0.05, method.p = NULL,
                      na.rm = TRUE, include_kw = TRUE) {
-  mf <- model.frame(formula, data)
+  if (!is.null(method.p)) {
+    warning("'method.p' is ignored: DSCF p-values come from the studentized range ",
+            "distribution and already control the family-wise error rate.")
+  }
+
+  mf <- model.frame(formula, data, na.action = if (na.rm) stats::na.omit else stats::na.pass)
   y <- mf[[1]]
-  g <- as.factor(mf[[2]])
+  g <- droplevels(as.factor(mf[[2]]))
 
-  if (na.rm) {
-    keep <- !(is.na(y) | is.na(g))
-    y <- y[keep]; g <- g[keep]
-  }
-  if (!is.numeric(y)) stop("The answer must be numerical.")
-  if (nlevels(g) < 2L) stop("at least 2 groups are required.")
+  if (!is.numeric(y)) stop("The response must be numeric.")
+  k <- nlevels(g)
+  if (k < 2L) stop("At least 2 groups are required.")
 
-  niveles <- levels(g)
-  k <- length(niveles)
-  N <- length(y)
+  n_j <- table(g)
+  # Rangos sobre la muestra completa: solo para ordenar los grupos y graficar
+  Rbar_j <- tapply(rank(y), g, mean)
 
-  ## Rangos globales (promedio en empates)
-  r <- rank(y, ties.method = "average")
+  pares <- .pares_ordenados(Rbar_j)
+  g1 <- vapply(pares, `[`, character(1), 1)
+  g2 <- vapply(pares, `[`, character(1), 2)
 
-  ## Medias de rangos y tamanos por grupo
-  split_r <- split(r, g)
-  n_j <- vapply(split_r, length, integer(1))
-  Rbar_j <- vapply(split_r, mean, numeric(1))
-
-  ## Varianza pooled de rangos dentro de grupos:
-  ## S^2 = sum_j sum_i (R_ij - Rbar_j)^2 / (N - k)
-  ss_within <- sum(vapply(names(split_r), function(nm) {
-    rx <- split_r[[nm]]
-    sum( (rx - mean(rx))^2 )
-  }, numeric(1)))
-  S2 <- ss_within / (N - k)
-
-  ## Correccion por empates (Critchlow–Fligner):
-  ## T = 1 - sum(t^3 - t)/(N^3 - N)    donde t = tamanos de cada empate en y
-  tab <- table(y)
-  tie_term <- if (any(tab > 1L)) sum(tab^3 - tab) else 0
-  T_corr <- 1 - tie_term / (N^3 - N)
-  if (T_corr <= 0) warning("Degenerate tie correction; check the data.")
-  S2_t <- S2 / T_corr
-
-  ## Todas las comparaciones por pares
-  pares <- utils::combn(niveles, 2, simplify = FALSE)
-
-  z_vals <- numeric(length(pares))
-  p_vals <- numeric(length(pares))
-  comp_lab <- character(length(pares))
-
+  W_vals <- numeric(length(pares))
   for (i in seq_along(pares)) {
-    g1 <- pares[[i]][1]; g2 <- pares[[i]][2]
-    dif <- abs(Rbar_j[g1] - Rbar_j[g2])
-    se  <- sqrt(S2_t * (1 / n_j[g1] + 1 / n_j[g2]))
-    z   <- dif / se
-    z_vals[i] <- z
-    p_vals[i] <- 2 * (1 - pnorm(z))
-    comp_lab[i] <- paste(g1, g2, sep = " - ")
+    yi <- y[g == g1[i]]; yj <- y[g == g2[i]]
+    ni <- length(yi); nj <- length(yj); nn <- ni + nj
+    r  <- rank(c(yi, yj))                 # rangos solo dentro del par
+    Wi <- sum(r[seq_len(ni)])
+    tt <- table(c(yi, yj))
+    V  <- ni * nj / 12 * (nn + 1 - sum(tt^3 - tt) / (nn * (nn - 1)))
+    W_vals[i] <- sqrt(2) * (Wi - ni * (nn + 1) / 2) / sqrt(V)
   }
-
-  p_adj <- p.adjust(p_vals, method = method.p)
-  sig <- ifelse(p_adj < 0.001, "***",
-                ifelse(p_adj < 0.01,  "**",
-                       ifelse(p_adj < 0.05,  "*",  "ns")))
+  p_vals <- stats::ptukey(abs(W_vals), k, Inf, lower.tail = FALSE)
 
   resultados <- data.frame(
-    Comparacion   = comp_lab,
-    z             = round(z_vals, 4),
-    p_value       = round(p_vals, 6),
-    p_ajustada    = round(p_adj, 6),
-    Significancia = sig,
+    Comparacion   = paste(g1, "-", g2),
+    W             = round(W_vals, 4),
+    p_value       = round(p_vals, 4),
+    p_ajustada    = round(p_vals, 4),
+    Significancia = .sig_stars(p_vals, alpha),
     stringsAsFactors = FALSE
   )
 
+  orden <- names(sort(Rbar_j, decreasing = TRUE))
   out <- list(
-    Resultados    = resultados[order(p_adj, z_vals, decreasing = FALSE), ],
-    Promedios     = Rbar_j,
-    Orden_Medias  = names(sort(Rbar_j, decreasing = TRUE)),
+    Resultados    = resultados,
+    Promedios     = Rbar_j[orden],
+    Orden_Medias  = orden,
     N_por_grupo   = n_j,
-    Parametros    = list(N = N, k = k, S2 = S2, T_corr = T_corr, S2_t = S2_t),
-    Metodo        = "DSCF (in the parametric)",
-    Ajuste        = method.p
+    Metodo        = "DSCF (non-parametric)",
+    Datos         = data.frame(y = y, grupo = g)
   )
+  if (isTRUE(include_kw)) out$KruskalWallis <- stats::kruskal.test(y, g)
 
-  if (isTRUE(include_kw)) {
-    out$KruskalWallis <- stats::kruskal.test(y ~ g)
-  }
-
-  class(out) <- c("comparaciones", "dscf")
+  out <- .agregar_info_pares(out, g1, g2, p_vals, p_vals)
+  class(out) <- c("dscf", "comparaciones_np", "comparaciones")
   out
 }

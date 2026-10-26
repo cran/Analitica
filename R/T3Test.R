@@ -112,7 +112,7 @@ T3Test <- function(modelo, comparar = NULL, alpha = 0.05) {
   orden_medias <- order(medias, decreasing = TRUE)
   etiquetas_ordenadas <- nombres_grupos[orden_medias]
 
-  comparaciones <- utils::combn(nombres_grupos, 2, simplify = FALSE)
+  comparaciones <- .pares_ordenados(medias)
 
   resultados <- data.frame(
     Comparacion   = character(),
@@ -123,6 +123,8 @@ T3Test <- function(modelo, comparar = NULL, alpha = 0.05) {
     Significancia = character(),
     stringsAsFactors = FALSE
   )
+
+  .g1 <- .g2 <- character(0); .p <- numeric(0)
 
   for (par in comparaciones) {
     g1 <- par[1]
@@ -143,11 +145,11 @@ T3Test <- function(modelo, comparar = NULL, alpha = 0.05) {
     # p-value desde la distribución de rango studentizado
     p_val <- 1 - stats::ptukey(q_val, nmeans = length(nombres_grupos), df = gl)
 
-    sig <- ifelse(p_val < 0.001, "***",
-                  ifelse(p_val < 0.01,  "**",
-                         ifelse(p_val < 0.05,   "*", "ns")))
+    sig <- .sig_stars(p_val, alpha)
 
-    comparacion <- paste(sort(c(g1, g2)), collapse = " - ")
+    comparacion <- paste(g1, "-", g2)
+
+    .g1 <- c(.g1, g1); .g2 <- c(.g2, g2); .p <- c(.p, unname(p_val))
 
     resultados <- rbind(
       resultados,
@@ -170,7 +172,8 @@ T3Test <- function(modelo, comparar = NULL, alpha = 0.05) {
     Metodo       = "Dunnett T3",
     Termino      = term_label
   )
-  class(out) <- c("comparaciones", "dunnettt3")
+  out <- .agregar_info_pares(out, .g1, .g2, .p)
+  class(out) <- c("dunnettt3", "comparaciones")
 
   return(out)
 }
